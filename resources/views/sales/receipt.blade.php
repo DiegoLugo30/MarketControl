@@ -22,7 +22,7 @@
                 <thead class="bg-gray-100">
                     <tr>
                         <th class="px-4 py-2 text-left">Producto</th>
-                        <th class="px-4 py-2 text-center">Cant.</th>
+                        <th class="px-4 py-2 text-center">Cantidad</th>
                         <th class="px-4 py-2 text-right">Precio</th>
                         <th class="px-4 py-2 text-right">Subtotal</th>
                     </tr>
@@ -31,14 +31,34 @@
                     @foreach($sale->items as $item)
                         <tr>
                             <td class="px-4 py-3">
-                                <p class="font-semibold">{{ $item->product->name }}</p>
-                                <p class="text-sm text-gray-500">{{ $item->product->barcode }}</p>
+                                <div class="flex items-center gap-2">
+                                    <p class="font-semibold">{{ $item->product->name }}</p>
+                                    @if($item->isWeighted())
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800">
+                                            <i class="fas fa-weight mr-1"></i> Pesable
+                                        </span>
+                                    @endif
+                                </div>
+                                <p class="text-sm text-gray-500 font-mono">
+                                    {{ $item->product->internal_code }}
+                                    @if($item->product->barcode)
+                                        <span class="text-gray-400">| {{ $item->product->barcode }}</span>
+                                    @endif
+                                </p>
                             </td>
                             <td class="px-4 py-3 text-center font-semibold">
-                                {{ $item->quantity }}
+                                @if($item->isWeighted())
+                                    <span class="text-blue-600">{{ number_format($item->weight, 3) }} kg</span>
+                                @else
+                                    {{ $item->quantity }} ud.
+                                @endif
                             </td>
                             <td class="px-4 py-3 text-right">
-                                ${{ number_format($item->price, 2) }}
+                                @if($item->isWeighted())
+                                    ${{ number_format($item->product->price_per_kg, 2) }}<span class="text-xs text-gray-500">/kg</span>
+                                @else
+                                    ${{ number_format($item->product->price, 2) }}
+                                @endif
                             </td>
                             <td class="px-4 py-3 text-right font-semibold">
                                 ${{ number_format($item->subtotal, 2) }}

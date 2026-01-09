@@ -20,29 +20,36 @@ class SaleController extends Controller
 
     /**
      * Procesar y completar una venta
+     * Soporta productos por unidad y por peso
      */
     public function complete(Request $request)
     {
         $validated = $request->validate([
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity' => 'nullable|integer|min:1',
+            'items.*.weight' => 'nullable|numeric|min:0.001',
+            'items.*.price' => 'required|numeric|min:0',
             'total' => 'required|numeric|min:0',
         ]);
 
         try {
             DB::beginTransaction();
 
-            // Verificar stock de todos los productos
+            // Verificar stock de productos no pesables
             foreach ($validated['items'] as $item) {
                 $product = Product::findOrFail($item['product_id']);
 
-                if (!$product->hasStock($item['quantity'])) {
-                    DB::rollBack();
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Stock insuficiente para {$product->name}. Disponible: {$product->stock}",
-                    ], 422);
+                // Solo verificar stock para productos no pesables
+                if (!$product->is_weighted) {
+                    $quantity = $item['quantity'] ?? 1;
+                    if (!$product->hasStock($quantity)) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Stock insuficiente para {$product->name}. Disponible: {$product->stock}",
+                        ], 422);
+                    }
                 }
             }
 
@@ -56,15 +63,27 @@ class SaleController extends Controller
             foreach ($validated['items'] as $item) {
                 $product = Product::findOrFail($item['product_id']);
 
-                SaleItem::create([
+                $saleItemData = [
                     'sale_id' => $sale->id,
                     'product_id' => $product->id,
-                    'quantity' => $item['quantity'],
-                    'price' => $product->price,
-                ]);
+                    'price' => $item['price'],
+                ];
 
-                // Decrementar stock
-                $product->decrementStock($item['quantity']);
+                // Determinar si es producto pesable o por unidad
+                if ($product->is_weighted && isset($item['weight'])) {
+                    // Producto pesable
+                    $saleItemData['weight'] = $item['weight'];
+                    $saleItemData['quantity'] = 1; // Para mantener compatibilidad
+                } else {
+                    // Producto por unidad
+                    $saleItemData['quantity'] = $item['quantity'] ?? 1;
+                    $saleItemData['weight'] = null;
+
+                    // Decrementar stock solo para productos no pesables
+                    $product->decrementStock($saleItemData['quantity']);
+                }
+
+                SaleItem::create($saleItemData);
             }
 
             DB::commit();
