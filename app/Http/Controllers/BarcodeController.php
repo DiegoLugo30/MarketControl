@@ -21,22 +21,27 @@ class BarcodeController extends Controller
     }
 
     /**
-     * Buscar producto por código de barras
-     * Busca primero en BD local, luego en API externa
+     * Buscar producto por código de barras o código interno
+     * Busca primero en BD local (barcode, luego internal_code), después en API externa
      */
     public function search(Request $request)
     {
-        $barcode = $request->input('barcode');
+        $code = $request->input('barcode'); // Puede ser barcode o internal_code
 
-        if (empty($barcode)) {
+        if (empty($code)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Código de barras vacío',
+                'message' => 'Código vacío',
             ]);
         }
 
-        // Buscar en base de datos local
-        $product = Product::where('barcode', $barcode)->first();
+        // Buscar en base de datos local - primero por barcode
+        $product = Product::where('barcode', $code)->first();
+
+        // Si no se encuentra por barcode, buscar por internal_code
+        if (!$product) {
+            $product = Product::where('internal_code', $code)->first();
+        }
 
         if ($product) {
             return response()->json([
@@ -44,31 +49,38 @@ class BarcodeController extends Controller
                 'found_locally' => true,
                 'product' => [
                     'id' => $product->id,
+                    'internal_code' => $product->internal_code,
                     'barcode' => $product->barcode,
                     'name' => $product->name,
                     'description' => $product->description,
                     'price' => $product->price,
+                    'price_per_kg' => $product->price_per_kg,
                     'stock' => $product->stock,
+                    'is_weighted' => $product->is_weighted,
+                    'requires_weight' => $product->requiresWeight(),
                 ],
             ]);
         }
 
-        // Si no existe localmente, consultar API externa
-        $apiResult = $this->productApiService->searchByBarcode($barcode);
+        // Si no existe localmente, consultar API externa (solo para códigos que parezcan EAN)
+        if (strlen($code) >= 8 && is_numeric($code)) {
+            $apiResult = $this->productApiService->searchByBarcode($code);
 
-        if ($apiResult && $apiResult['found']) {
-            return response()->json([
-                'success' => true,
-                'found_locally' => false,
-                'found_api' => true,
-                'product' => [
-                    'barcode' => $apiResult['barcode'],
-                    'name' => $apiResult['name'],
-                    'description' => $apiResult['description'],
-                    'price' => null,
-                    'stock' => null,
-                ],
-            ]);
+            if ($apiResult && $apiResult['found']) {
+                return response()->json([
+                    'success' => true,
+                    'found_locally' => false,
+                    'found_api' => true,
+                    'product' => [
+                        'barcode' => $apiResult['barcode'],
+                        'name' => $apiResult['name'],
+                        'description' => $apiResult['description'],
+                        'price' => null,
+                        'stock' => null,
+                        'is_weighted' => false,
+                    ],
+                ]);
+            }
         }
 
         // No se encontró en ningún lado
@@ -76,7 +88,7 @@ class BarcodeController extends Controller
             'success' => true,
             'found_locally' => false,
             'found_api' => false,
-            'barcode' => $barcode,
+            'code' => $code,
         ]);
     }
 }

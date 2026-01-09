@@ -109,6 +109,8 @@
                 <form id="form-api-create" action="{{ route('products.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="barcode" id="api-barcode">
+                    <input type="hidden" name="internal_code" id="api-internal-code">
+                    <input type="hidden" name="is_weighted" value="0">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-semibold mb-1">Nombre</label>
@@ -149,6 +151,8 @@
                 <form id="form-manual-create" action="{{ route('products.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="barcode" id="manual-barcode">
+                    <input type="hidden" name="internal_code" id="manual-internal-code">
+                    <input type="hidden" name="is_weighted" value="0">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
                             <label class="block text-sm font-semibold mb-1">Nombre *</label>
@@ -268,6 +272,7 @@ $(document).ready(function() {
     // Mostrar producto de API
     function showApiProduct(product) {
         $('#api-barcode').val(product.barcode);
+        $('#api-internal-code').val(product.barcode); // Usar barcode como internal_code por defecto
         $('#api-name').val(product.name || 'Sin nombre');
         $('#api-description').val(product.description || '');
         $('#result-api').removeClass('hidden');
@@ -277,18 +282,27 @@ $(document).ready(function() {
     function showNotFound(barcode) {
         $('#notfound-barcode').text(barcode);
         $('#manual-barcode').val(barcode);
+        $('#manual-internal-code').val(barcode); // Usar barcode como internal_code por defecto
         $('#result-not-found').removeClass('hidden');
     }
 
     // Nuevo escaneo
     $('#btn-new-scan').click(function() {
         $('#result').addClass('hidden');
-        $('#barcode-input').val('').focus();
+        if (currentMode === 'camera') {
+            startCamera();
+        } else {
+            $('#barcode-input').val('').focus();
+        }
     });
 
     $('#btn-cancel-api, #btn-cancel-manual').click(function() {
         $('#result').addClass('hidden');
-        $('#barcode-input').val('').focus();
+        if (currentMode === 'camera') {
+            startCamera();
+        } else {
+            $('#barcode-input').val('').focus();
+        }
     });
 
     // Iniciar cámara con QuaggaJS

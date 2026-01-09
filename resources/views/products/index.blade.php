@@ -19,8 +19,9 @@
                 <table class="w-full">
                     <thead class="bg-gray-100">
                         <tr>
-                            <th class="px-4 py-3 text-left">Código</th>
+                            <th class="px-4 py-3 text-left">Código Interno</th>
                             <th class="px-4 py-3 text-left">Nombre</th>
+                            <th class="px-4 py-3 text-center">Tipo</th>
                             <th class="px-4 py-3 text-left">Descripción</th>
                             <th class="px-4 py-3 text-right">Precio</th>
                             <th class="px-4 py-3 text-right">Stock</th>
@@ -30,18 +31,42 @@
                     <tbody class="divide-y">
                         @foreach($products as $product)
                             <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 font-mono">{{ $product->barcode }}</td>
+                                <td class="px-4 py-3">
+                                    <div class="font-mono font-semibold">{{ $product->internal_code }}</div>
+                                    @if($product->barcode)
+                                        <div class="text-xs text-gray-500 font-mono">{{ $product->barcode }}</div>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-3 font-semibold">{{ $product->name }}</td>
+                                <td class="px-4 py-3 text-center">
+                                    @if($product->is_weighted)
+                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800">
+                                            <i class="fas fa-weight mr-1"></i> Pesable
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-800">
+                                            <i class="fas fa-box mr-1"></i> Unidad
+                                        </span>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-3 text-gray-600 text-sm">
-                                    {{ Str::limit($product->description, 50) }}
+                                    {{ Str::limit($product->description, 40) }}
                                 </td>
                                 <td class="px-4 py-3 text-right font-semibold text-green-600">
-                                    ${{ number_format($product->price, 2) }}
+                                    @if($product->is_weighted)
+                                        ${{ number_format($product->price_per_kg, 2) }}<span class="text-xs text-gray-500">/kg</span>
+                                    @else
+                                        ${{ number_format($product->price, 2) }}
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3 text-right">
-                                    <span class="px-2 py-1 rounded text-sm {{ $product->stock > 10 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                        {{ $product->stock }}
-                                    </span>
+                                    @if($product->is_weighted)
+                                        <span class="text-gray-400 text-sm">N/A</span>
+                                    @else
+                                        <span class="px-2 py-1 rounded text-sm {{ $product->stock > 10 ? 'bg-green-100 text-green-800' : ($product->stock > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') }}">
+                                            {{ $product->stock }}
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <div class="flex justify-center space-x-2">

@@ -14,7 +14,7 @@
             <div class="lg:col-span-2">
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                     <label class="block text-gray-700 font-semibold mb-2">
-                        <i class="fas fa-barcode"></i> Escanear Código de Barras
+                        <i class="fas fa-barcode"></i> Código de Barras / Código Interno
                     </label>
                     <input
                         type="text"
@@ -24,7 +24,7 @@
                         autofocus
                     >
                     <p class="text-sm text-gray-600 mt-2">
-                        Presiona ENTER después de escanear o ingresar el código
+                        <i class="fas fa-info-circle"></i> Presiona ENTER después de escanear
                     </p>
                 </div>
 
@@ -79,6 +79,75 @@
     </div>
 </div>
 
+<!-- Modal de Peso para Productos Pesables -->
+<div id="weight-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+        <div class="text-center mb-4">
+            <div class="text-blue-600 text-5xl mb-2">
+                <i class="fas fa-weight"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2" id="weight-product-name">Producto Pesable</h2>
+            <p class="text-gray-600 text-sm" id="weight-product-price"></p>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-gray-700 font-semibold mb-2 text-center">
+                Ingrese el Peso
+            </label>
+
+            <!-- Input de peso con selector de unidad -->
+            <div class="flex gap-2 mb-3">
+                <input
+                    type="number"
+                    id="weight-input"
+                    class="flex-1 px-4 py-3 border-2 border-blue-300 rounded-lg text-center text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0"
+                    step="1"
+                    min="1"
+                    autofocus
+                >
+                <select id="weight-unit" class="px-3 py-2 border-2 border-blue-300 rounded-lg font-semibold">
+                    <option value="g" selected>g</option>
+                    <option value="kg">kg</option>
+                </select>
+            </div>
+
+            <!-- Teclado numérico virtual -->
+            <div class="grid grid-cols-3 gap-2 mb-3">
+                <button class="num-btn bg-gray-100 hover:bg-gray-200 py-3 rounded text-xl font-semibold" data-num="1">1</button>
+                <button class="num-btn bg-gray-100 hover:bg-gray-200 py-3 rounded text-xl font-semibold" data-num="2">2</button>
+                <button class="num-btn bg-gray-100 hover:bg-gray-200 py-3 rounded text-xl font-semibold" data-num="3">3</button>
+                <button class="num-btn bg-gray-100 hover:bg-gray-200 py-3 rounded text-xl font-semibold" data-num="4">4</button>
+                <button class="num-btn bg-gray-100 hover:bg-gray-200 py-3 rounded text-xl font-semibold" data-num="5">5</button>
+                <button class="num-btn bg-gray-100 hover:bg-gray-200 py-3 rounded text-xl font-semibold" data-num="6">6</button>
+                <button class="num-btn bg-gray-100 hover:bg-gray-200 py-3 rounded text-xl font-semibold" data-num="7">7</button>
+                <button class="num-btn bg-gray-100 hover:bg-gray-200 py-3 rounded text-xl font-semibold" data-num="8">8</button>
+                <button class="num-btn bg-gray-100 hover:bg-gray-200 py-3 rounded text-xl font-semibold" data-num="9">9</button>
+                <button class="num-btn bg-gray-100 hover:bg-gray-200 py-3 rounded text-xl font-semibold" data-num=".">.</button>
+                <button class="num-btn bg-gray-100 hover:bg-gray-200 py-3 rounded text-xl font-semibold" data-num="0">0</button>
+                <button id="btn-clear-weight" class="bg-red-100 hover:bg-red-200 py-3 rounded text-xl font-semibold">
+                    <i class="fas fa-backspace"></i>
+                </button>
+            </div>
+
+            <!-- Precio calculado -->
+            <div class="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                <p class="text-sm text-gray-600 mb-1">Precio Total</p>
+                <p class="text-3xl font-bold text-green-600" id="calculated-price">$0.00</p>
+            </div>
+        </div>
+
+        <div class="flex gap-3">
+            <button id="btn-add-weighted" class="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <i class="fas fa-check"></i> Agregar
+            </button>
+            <button id="btn-cancel-weight" class="flex-1 bg-gray-500 text-white py-3 rounded-lg hover:bg-gray-600 transition font-semibold">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal de confirmación de venta -->
 <div id="sale-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
@@ -105,6 +174,7 @@
 <script>
 $(document).ready(function() {
     let cart = [];
+    let pendingWeightedProduct = null; // Producto esperando peso
 
     // Auto-focus en el input de código de barras
     function focusBarcodeInput() {
@@ -115,19 +185,29 @@ $(document).ready(function() {
     $('#pos-barcode-input').on('keypress', function(e) {
         if (e.which === 13) {
             e.preventDefault();
-            const barcode = $(this).val().trim();
-            if (barcode) {
-                searchAndAddProduct(barcode);
+            const code = $(this).val().trim();
+            if (code) {
+                searchAndAddProduct(code);
             }
         }
     });
 
-    // Buscar producto y agregarlo al carrito
-    function searchAndAddProduct(barcode) {
-        $.post('{{ route("barcode.search") }}', { barcode: barcode })
+    // Buscar producto y agregarlo al carrito o pedir peso
+    function searchAndAddProduct(code) {
+        $.post('{{ route("barcode.search") }}', { barcode: code })
             .done(function(response) {
                 if (response.found_locally) {
-                    addToCart(response.product);
+                    const product = response.product;
+
+                    // Verificar si es producto pesable
+                    if (product.requires_weight) {
+                        // Mostrar modal de peso
+                        showWeightModal(product);
+                    } else {
+                        // Producto normal - agregar directamente
+                        addToCart(product);
+                    }
+
                     $('#pos-barcode-input').val('');
                 } else {
                     alert('Producto no encontrado. Por favor regístralo primero.');
@@ -140,14 +220,131 @@ $(document).ready(function() {
             });
     }
 
-    // Agregar producto al carrito
+    // Mostrar modal de peso
+    function showWeightModal(product) {
+        pendingWeightedProduct = product;
+        $('#weight-product-name').text(product.name);
+        $('#weight-product-price').text('$' + parseFloat(product.price_per_kg).toFixed(2) + ' por kg');
+        $('#weight-input').val('');
+        $('#weight-unit').val('g'); // Resetear a gramos
+        $('#weight-input').attr('step', '1').attr('min', '1').attr('placeholder', '0'); // Ajustar para gramos
+        $('#calculated-price').text('$0.00');
+        $('#btn-add-weighted').prop('disabled', true);
+        $('#weight-modal').removeClass('hidden');
+        $('#weight-input').focus();
+    }
+
+    // Cerrar modal de peso
+    function closeWeightModal() {
+        $('#weight-modal').addClass('hidden');
+        pendingWeightedProduct = null;
+        focusBarcodeInput();
+    }
+
+    // Teclado numérico virtual
+    $('.num-btn').on('click', function() {
+        const num = $(this).data('num');
+        const currentVal = $('#weight-input').val();
+        $('#weight-input').val(currentVal + num);
+        calculateWeightPrice();
+    });
+
+    // Botón borrar
+    $('#btn-clear-weight').on('click', function() {
+        const currentVal = $('#weight-input').val();
+        $('#weight-input').val(currentVal.slice(0, -1));
+        calculateWeightPrice();
+    });
+
+    // Calcular precio al escribir
+    $('#weight-input, #weight-unit').on('input change', calculateWeightPrice);
+
+    // Ajustar step y placeholder según unidad seleccionada
+    $('#weight-unit').on('change', function() {
+        const unit = $(this).val();
+        const input = $('#weight-input');
+
+        if (unit === 'g') {
+            input.attr('step', '1');
+            input.attr('min', '1');
+            input.attr('placeholder', '0');
+        } else {
+            input.attr('step', '0.001');
+            input.attr('min', '0.001');
+            input.attr('placeholder', '0.000');
+        }
+    });
+
+    function calculateWeightPrice() {
+        if (!pendingWeightedProduct) return;
+
+        let weight = parseFloat($('#weight-input').val());
+        const unit = $('#weight-unit').val();
+
+        if (isNaN(weight) || weight <= 0) {
+            $('#calculated-price').text('$0.00');
+            $('#btn-add-weighted').prop('disabled', true);
+            return;
+        }
+
+        // Convertir gramos a kg si es necesario
+        if (unit === 'g') {
+            weight = weight / 1000;
+        }
+
+        const pricePerKg = parseFloat(pendingWeightedProduct.price_per_kg);
+        const totalPrice = weight * pricePerKg;
+
+        $('#calculated-price').text('$' + totalPrice.toFixed(2));
+        $('#btn-add-weighted').prop('disabled', false);
+    }
+
+    // Agregar producto pesable
+    $('#btn-add-weighted').on('click', function() {
+        if (!pendingWeightedProduct) return;
+
+        let weight = parseFloat($('#weight-input').val());
+        const unit = $('#weight-unit').val();
+
+        if (isNaN(weight) || weight <= 0) {
+            alert('Por favor ingrese un peso válido');
+            return;
+        }
+
+        // Convertir a kg
+        if (unit === 'g') {
+            weight = weight / 1000;
+        }
+
+        const pricePerKg = parseFloat(pendingWeightedProduct.price_per_kg);
+        const totalPrice = weight * pricePerKg;
+
+        // Agregar al carrito con peso
+        addWeightedToCart(pendingWeightedProduct, weight, totalPrice);
+        closeWeightModal();
+    });
+
+    // Cancelar modal de peso
+    $('#btn-cancel-weight').on('click', closeWeightModal);
+
+    // ENTER en input de peso
+    $('#weight-input').on('keypress', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            $('#btn-add-weighted').click();
+        }
+    });
+
+    // Agregar producto normal al carrito
     function addToCart(product) {
         if (product.stock < 1) {
             alert('Producto sin stock disponible');
             return;
         }
 
-        const existingItem = cart.find(item => item.product_id === product.id);
+        const existingItem = cart.find(item =>
+            item.product_id === product.id && !item.is_weighted
+        );
 
         if (existingItem) {
             if (existingItem.quantity < product.stock) {
@@ -159,13 +356,31 @@ $(document).ready(function() {
         } else {
             cart.push({
                 product_id: product.id,
-                barcode: product.barcode,
                 name: product.name,
                 price: parseFloat(product.price),
                 quantity: 1,
-                stock: product.stock
+                stock: product.stock,
+                is_weighted: false,
+                weight: null
             });
         }
+
+        renderCart();
+        focusBarcodeInput();
+    }
+
+    // Agregar producto pesable al carrito
+    function addWeightedToCart(product, weight, totalPrice) {
+        // Los productos pesables NO se acumulan - cada peso es un item separado
+        cart.push({
+            product_id: product.id,
+            name: product.name,
+            price: totalPrice,
+            quantity: 1,
+            stock: 0,
+            is_weighted: true,
+            weight: weight
+        });
 
         renderCart();
         focusBarcodeInput();
@@ -182,14 +397,22 @@ $(document).ready(function() {
             $('#cart-items .cart-item').remove();
 
             cart.forEach((item, index) => {
-                const subtotal = item.quantity * item.price;
+                const subtotal = item.is_weighted ? item.price : (item.quantity * item.price);
+                const quantityText = item.is_weighted
+                    ? `<span class="text-blue-600">${item.weight.toFixed(3)} kg</span>`
+                    : `${item.quantity} ud.`;
+
+                const priceText = item.is_weighted
+                    ? ''
+                    : `<p class="text-sm text-green-600 font-semibold">$${item.price.toFixed(2)} c/u</p>`;
+
                 const itemHtml = `
                     <div class="cart-item bg-white border border-gray-200 rounded-lg p-4">
                         <div class="flex justify-between items-start mb-2">
                             <div class="flex-1">
                                 <h3 class="font-semibold text-gray-800">${item.name}</h3>
-                                <p class="text-sm text-gray-500">Código: ${item.barcode}</p>
-                                <p class="text-sm text-green-600 font-semibold">$${item.price.toFixed(2)} c/u</p>
+                                ${priceText}
+                                ${item.is_weighted ? '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Pesable</span>' : ''}
                             </div>
                             <button class="text-red-500 hover:text-red-700" onclick="removeFromCart(${index})">
                                 <i class="fas fa-times"></i>
@@ -197,13 +420,17 @@ $(document).ready(function() {
                         </div>
                         <div class="flex justify-between items-center">
                             <div class="flex items-center space-x-2">
-                                <button class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded" onclick="decrementQuantity(${index})">
-                                    <i class="fas fa-minus"></i>
-                                </button>
-                                <span class="font-semibold text-lg px-3">${item.quantity}</span>
-                                <button class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded" onclick="incrementQuantity(${index})">
-                                    <i class="fas fa-plus"></i>
-                                </button>
+                                ${!item.is_weighted ? `
+                                    <button class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded" onclick="decrementQuantity(${index})">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <span class="font-semibold text-lg px-3">${item.quantity}</span>
+                                    <button class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded" onclick="incrementQuantity(${index})">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                ` : `
+                                    <span class="font-semibold text-lg px-3">${quantityText}</span>
+                                `}
                             </div>
                             <div class="text-right">
                                 <p class="text-sm text-gray-500">Subtotal</p>
@@ -221,13 +448,13 @@ $(document).ready(function() {
         updateTotals();
     }
 
-    // Incrementar cantidad
+    // Incrementar cantidad (solo productos normales)
     window.incrementQuantity = function(index) {
         const item = cart[index];
-        if (item.quantity < item.stock) {
+        if (!item.is_weighted && item.quantity < item.stock) {
             item.quantity++;
             renderCart();
-        } else {
+        } else if (!item.is_weighted) {
             alert('No hay más stock disponible');
         }
     };
@@ -252,8 +479,12 @@ $(document).ready(function() {
     // Actualizar totales
     function updateTotals() {
         const totalItems = cart.length;
-        const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
-        const totalAmount = cart.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+        const totalQuantity = cart.reduce((sum, item) => {
+            return item.is_weighted ? sum + 1 : sum + item.quantity;
+        }, 0);
+        const totalAmount = cart.reduce((sum, item) => {
+            return item.is_weighted ? sum + item.price : sum + (item.quantity * item.price);
+        }, 0);
 
         $('#total-items').text(totalItems);
         $('#total-quantity').text(totalQuantity);
@@ -273,12 +504,16 @@ $(document).ready(function() {
     $('#btn-complete-sale').click(function() {
         if (cart.length === 0) return;
 
-        const totalAmount = cart.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+        const totalAmount = cart.reduce((sum, item) => {
+            return item.is_weighted ? sum + item.price : sum + (item.quantity * item.price);
+        }, 0);
 
         const saleData = {
             items: cart.map(item => ({
                 product_id: item.product_id,
-                quantity: item.quantity
+                quantity: item.is_weighted ? 1 : item.quantity,
+                weight: item.is_weighted ? item.weight : null,
+                price: item.is_weighted ? item.price : (item.quantity * item.price)
             })),
             total: totalAmount.toFixed(2)
         };
@@ -307,7 +542,11 @@ $(document).ready(function() {
     });
 
     // Mantener foco en el input
-    $(document).on('click', function() {
+    $(document).on('click', function(e) {
+        // No enfocar si estamos en el modal de peso
+        if (!$('#weight-modal').hasClass('hidden')) {
+            return;
+        }
         focusBarcodeInput();
     });
 
