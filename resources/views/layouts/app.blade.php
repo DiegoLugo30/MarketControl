@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'POS Barcode')</title>
+    <title>@yield('title', 'Arima Store')</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,12 +16,12 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
     <!-- Navegación -->
-    <nav class="bg-blue-600 text-white shadow-lg">
+    <nav class="bg-green-600 text-white shadow-lg">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center py-4">
                 <div class="flex items-center space-x-4">
                     <a href="{{ route('home') }}" class="text-2xl font-bold">
-                        <i class="fas fa-cash-register"></i> POS Barcode
+                        <i class="fas fa-cash-register"></i> Arima Store
                     </a>
                 </div>
                 <div class="flex space-x-4">
@@ -67,7 +67,7 @@
     <!-- Footer -->
     <footer class="bg-gray-800 text-white mt-12 py-6">
         <div class="container mx-auto px-4 text-center">
-            <p>&copy; {{ date('Y') }} POS Barcode - Sistema de Punto de Venta</p>
+            <p>&copy; {{ date('Y') }} Arima Store - Sistema de Punto de Venta</p>
         </div>
     </footer>
 
