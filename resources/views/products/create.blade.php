@@ -19,8 +19,8 @@
             </div>
         @endif
 
-        <form action="{{ route('products.store') }}" method="POST" id="product-form">
-            @csrf
+        <form action="https://marketcontrol-production-3c1f.up.railway.app/products" method="POST" id="product-form">
+        @csrf
 
             <!-- Tipo de Producto -->
             <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
