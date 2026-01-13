@@ -96,10 +96,10 @@
             <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
                 <i class="fas fa-print"></i> Imprimir
             </button>
-            <a href="https://marketcontrol-production-3c1f.up.railway.app/" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+            <a href="{{ env('APP_URL') }}/" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
             <i class="fas fa-cash-register"></i> Nueva Venta
             </a>
-            <a href="https://marketcontrol-production-3c1f.up.railway.app/sales" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700">
+            <a href="{{ env('APP_URL') }}/sales" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700">
             <i class="fas fa-list"></i> Ver Ventas
             </a>
         </div>

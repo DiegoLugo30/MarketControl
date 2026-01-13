@@ -73,7 +73,7 @@
                                         <a href="{{ route('products.edit', $product) }}" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <form action="https://marketcontrol-production-3c1f.up.railway.app/products/{{ $product->id }}" method="POST" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar este producto?')">
+                                        <form action="{{ env('APP_URL') }}/products/{{ $product->id }}" method="POST" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar este producto?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
@@ -95,7 +95,7 @@
             <div class="text-center py-12 text-gray-500">
                 <i class="fas fa-box-open text-6xl mb-4"></i>
                 <p class="text-xl">No hay productos registrados</p>
-                <a href="https://marketcontrol-production-3c1f.up.railway.app/products/create" class="mt-4 inline-block bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+                <a href="{{ env('APP_URL') }}/products/create" class="mt-4 inline-block bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
                 Crear primer producto
                 </a>
             </div>

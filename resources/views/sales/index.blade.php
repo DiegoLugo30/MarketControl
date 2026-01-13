@@ -9,7 +9,7 @@
             <h1 class="text-3xl font-bold text-gray-800">
                 <i class="fas fa-receipt"></i> Historial de Ventas
             </h1>
-            <a href="https://marketcontrol-production-3c1f.up.railway.app/" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">
+            <a href="{{ env('APP_URL') }}/" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">
             <i class="fas fa-plus"></i> Nueva Venta
             </a>
         </div>

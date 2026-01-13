@@ -19,7 +19,7 @@
             </div>
         @endif
 
-        <form action="https://marketcontrol-production-3c1f.up.railway.app/products" method="POST" id="product-form">
+        <form action="{{ env('APP_URL') }}/products" method="POST" id="product-form">
         @csrf
 
             <!-- Tipo de Producto -->
@@ -188,7 +188,7 @@
                 <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">
                     <i class="fas fa-save"></i> Guardar Producto
                 </button>
-                <a href="https://marketcontrol-production-3c1f.up.railway.app/products" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
+                <a href="{{ env('APP_URL') }}/products" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
                 <i class="fas fa-times"></i> Cancelar
                 </a>
             </div>
