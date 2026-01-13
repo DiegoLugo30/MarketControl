@@ -73,6 +73,10 @@ fi
 
 echo "✅ PHP-FPM corriendo"
 
+echo "🌍 Configurando puerto dinámico para Nginx..."
+envsubst '$PORT' < /etc/nginx/conf.d/default.conf > /tmp/default.conf
+mv /tmp/default.conf /etc/nginx/conf.d/default.conf
+
 # Iniciar Nginx en primer plano
 echo "🌍 Iniciando Nginx..."
 exec nginx -g 'daemon off;'
