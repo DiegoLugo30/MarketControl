@@ -17,21 +17,54 @@ class ProductApiService
      */
     public function searchByBarcode(string $barcode): ?array
     {
+        $url = self::API_URL . $barcode . '.json';
+
+        Log::info('🔍 Consultando OpenFoodFacts API', [
+            'barcode' => $barcode,
+            'url' => $url,
+        ]);
+
         try {
-            $response = Http::timeout(5)
-                ->get(self::API_URL . $barcode . '.json');
+            $response = Http::timeout(10)
+                ->withHeaders([
+                    'User-Agent' => 'MarketControl/1.0 (Laravel POS System)',
+                ])
+                ->get($url);
+
+            $statusCode = $response->status();
+
+            Log::info('📡 Respuesta de OpenFoodFacts API', [
+                'barcode' => $barcode,
+                'status_code' => $statusCode,
+                'successful' => $response->successful(),
+                'body_length' => strlen($response->body()),
+            ]);
 
             if (!$response->successful()) {
+                Log::warning('⚠️ API retornó código no exitoso', [
+                    'barcode' => $barcode,
+                    'status' => $statusCode,
+                    'body' => substr($response->body(), 0, 500),
+                ]);
                 return null;
             }
 
             $data = $response->json();
 
             if (!isset($data['status']) || $data['status'] !== 1) {
+                Log::info('ℹ️ Producto no encontrado en OpenFoodFacts', [
+                    'barcode' => $barcode,
+                    'api_status' => $data['status'] ?? 'undefined',
+                ]);
                 return null;
             }
 
             $product = $data['product'] ?? [];
+
+            Log::info('✅ Producto encontrado en OpenFoodFacts', [
+                'barcode' => $barcode,
+                'name' => $this->extractName($product),
+            ]);
 
             return [
                 'found' => true,
@@ -39,19 +72,31 @@ class ProductApiService
                 'description' => $this->extractDescription($product),
                 'barcode' => $barcode,
             ];
-        } catch (\Exception $e) {
-            // Log a Laravel log normal
-            Log::error('Error consultando OpenFoodFacts API', [
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Log::error('❌ Error de conexión a OpenFoodFacts API', [
                 'barcode' => $barcode,
                 'error' => $e->getMessage(),
+                'type' => 'ConnectionException',
             ]);
-
-            // Además imprimilo a stdout para que aparezca en Deploy Logs
-            echo "[DEBUG] Error consultando API: " . $e->getMessage() . " (barcode: $barcode)\n";
-
+            return null;
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            Log::error('❌ Error en request a OpenFoodFacts API', [
+                'barcode' => $barcode,
+                'error' => $e->getMessage(),
+                'type' => 'RequestException',
+            ]);
+            return null;
+        } catch (\Exception $e) {
+            Log::error('❌ Error inesperado consultando OpenFoodFacts API', [
+                'barcode' => $barcode,
+                'error' => $e->getMessage(),
+                'type' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             return null;
         }
-
     }
 
     /**

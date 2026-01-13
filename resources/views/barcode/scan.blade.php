@@ -233,12 +233,16 @@ $(document).ready(function() {
 
     // Buscar código de barras
     function searchBarcode(barcode) {
+        console.log('🔍 Iniciando búsqueda de código:', barcode);
+
         $('#loading').removeClass('hidden');
         $('#result').addClass('hidden');
         $('#result-found, #result-api, #result-not-found').addClass('hidden');
 
         $.post('{{ route("barcode.search") }}', { barcode: barcode })
             .done(function(response) {
+                console.log('✅ Respuesta recibida:', response);
+
                 $('#loading').addClass('hidden');
                 $('#result').removeClass('hidden');
 
@@ -252,9 +256,33 @@ $(document).ready(function() {
 
                 $('#barcode-input').val('');
             })
-            .fail(function() {
+            .fail(function(xhr, status, error) {
+                console.error('❌ Error en búsqueda:', {
+                    status: status,
+                    error: error,
+                    responseText: xhr.responseText,
+                    statusCode: xhr.status
+                });
+
                 $('#loading').addClass('hidden');
-                alert('Error al buscar el producto');
+
+                let errorMessage = 'Error al buscar el producto';
+
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.message) {
+                        errorMessage = response.message;
+                    }
+                    if (response.error_type) {
+                        errorMessage += '\n\nTipo de error: ' + response.error_type;
+                    }
+                } catch (e) {
+                    errorMessage += '\n\nCódigo HTTP: ' + xhr.status;
+                    errorMessage += '\nDetalles: ' + xhr.responseText.substring(0, 200);
+                }
+
+                alert(errorMessage);
+                console.error('Detalles completos del error:', xhr);
             });
     }
 
