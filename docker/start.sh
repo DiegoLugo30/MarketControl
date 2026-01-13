@@ -58,20 +58,21 @@ php artisan route:clear 2>/dev/null || true
 echo "✅ Aplicación lista!"
 echo "🌐 Accede a: http://localhost:8000"
 
-# Iniciar PHP-FPM en segundo plano
+# ==============================
+# Railway: usar servidor interno
+# ==============================
+if [ -n "$PORT" ]; then
+    echo "🚄 Railway detectado - iniciando Laravel en puerto $PORT"
+    exec php artisan serve --host=0.0.0.0 --port=$PORT
+fi
+
+# ==============================
+# Local: Nginx + PHP-FPM
+# ==============================
 echo "🐘 Iniciando PHP-FPM..."
 php-fpm -D
 
-# Dar tiempo a PHP-FPM para iniciar
 sleep 2
-
-# Verificar que PHP-FPM esté corriendo
-if ! pgrep -x php-fpm > /dev/null; then
-    echo "❌ Error: PHP-FPM no se inició correctamente"
-    exit 1
-fi
-
-echo "✅ PHP-FPM corriendo"
 
 echo "🌍 Configurando puerto dinámico para Nginx..."
 envsubst '$PORT' < /etc/nginx/conf.d/default.conf > /tmp/default.conf
