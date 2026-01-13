@@ -194,8 +194,19 @@ $(document).ready(function() {
 
     // Buscar producto y agregarlo al carrito o pedir peso
     function searchAndAddProduct(code) {
-        $.post('{{ route("barcode.search") }}', { barcode: code })
-            .done(function(response) {
+        console.log('🔍 [POS] Buscando código:', code);
+        console.log('📋 [POS] CSRF Token:', $('meta[name="csrf-token"]').attr('content'));
+
+        $.ajax({
+            url: '{{ route("barcode.search") }}',
+            type: 'POST',
+            data: { barcode: code },
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                console.log('✅ [POS] Respuesta:', response);
+
                 if (response.found_locally) {
                     const product = response.product;
 
@@ -213,11 +224,39 @@ $(document).ready(function() {
                     alert('Producto no encontrado. Por favor regístralo primero.');
                     $('#pos-barcode-input').val('');
                 }
-            })
-            .fail(function() {
-                alert('Error al buscar el producto');
+            },
+            error: function(xhr, status, error) {
+                console.error('❌ [POS] ERROR:', {
+                    status: status,
+                    error: error,
+                    statusCode: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText,
+                    responseJSON: xhr.responseJSON
+                });
+
+                let errorMessage = '❌ ERROR EN POS\n\n';
+                errorMessage += 'HTTP: ' + xhr.status + ' ' + xhr.statusText + '\n';
+                errorMessage += 'Código: ' + code + '\n\n';
+
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage += xhr.responseJSON.message;
+                } else if (xhr.status === 419) {
+                    errorMessage += '⚠️ Sesión expirada\nRecarga la página (F5)';
+                } else if (xhr.status === 500) {
+                    errorMessage += '⚠️ Error del servidor\nVer consola (F12)';
+                } else if (xhr.status === 0) {
+                    errorMessage += '⚠️ Sin conexión al servidor';
+                } else {
+                    errorMessage += 'Ver consola del navegador (F12) para detalles';
+                }
+
+                alert(errorMessage);
+                console.error('🔴 [POS] ERROR COMPLETO:', xhr);
+
                 $('#pos-barcode-input').val('');
-            });
+            }
+        });
     }
 
     // Mostrar modal de peso

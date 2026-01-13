@@ -234,13 +234,21 @@ $(document).ready(function() {
     // Buscar código de barras
     function searchBarcode(barcode) {
         console.log('🔍 Iniciando búsqueda de código:', barcode);
+        console.log('📋 CSRF Token:', $('meta[name="csrf-token"]').attr('content'));
+        console.log('🌐 URL:', '{{ route("barcode.search") }}');
 
         $('#loading').removeClass('hidden');
         $('#result').addClass('hidden');
         $('#result-found, #result-api, #result-not-found').addClass('hidden');
 
-        $.post('{{ route("barcode.search") }}', { barcode: barcode })
-            .done(function(response) {
+        $.ajax({
+            url: '{{ route("barcode.search") }}',
+            type: 'POST',
+            data: { barcode: barcode },
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
                 console.log('✅ Respuesta recibida:', response);
 
                 $('#loading').addClass('hidden');
@@ -255,35 +263,64 @@ $(document).ready(function() {
                 }
 
                 $('#barcode-input').val('');
-            })
-            .fail(function(xhr, status, error) {
-                console.error('❌ Error en búsqueda:', {
+            },
+            error: function(xhr, status, error) {
+                console.error('❌ ERROR COMPLETO:', {
                     status: status,
                     error: error,
+                    statusCode: xhr.status,
+                    statusText: xhr.statusText,
                     responseText: xhr.responseText,
-                    statusCode: xhr.status
+                    responseJSON: xhr.responseJSON,
+                    headers: xhr.getAllResponseHeaders()
                 });
 
                 $('#loading').addClass('hidden');
 
-                let errorMessage = 'Error al buscar el producto';
+                let errorMessage = '❌ ERROR AL BUSCAR PRODUCTO\n\n';
+                errorMessage += 'Código HTTP: ' + xhr.status + ' ' + xhr.statusText + '\n';
+                errorMessage += 'Código escaneado: ' + barcode + '\n\n';
 
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    if (response.message) {
-                        errorMessage = response.message;
+                // Intentar parsear respuesta JSON
+                if (xhr.responseJSON) {
+                    errorMessage += 'Mensaje: ' + (xhr.responseJSON.message || 'Sin mensaje') + '\n';
+                    if (xhr.responseJSON.error_type) {
+                        errorMessage += 'Tipo: ' + xhr.responseJSON.error_type + '\n';
                     }
-                    if (response.error_type) {
-                        errorMessage += '\n\nTipo de error: ' + response.error_type;
+                } else if (xhr.responseText && xhr.responseText.length > 0) {
+                    // Si es HTML (error 500, 419, etc)
+                    if (xhr.responseText.includes('<html') || xhr.responseText.includes('<!DOCTYPE')) {
+                        errorMessage += 'Error HTML (ver consola para detalles)\n';
+                        console.error('📄 HTML de error:', xhr.responseText);
+
+                        // Extraer título si existe
+                        const titleMatch = xhr.responseText.match(/<title>(.*?)<\/title>/i);
+                        if (titleMatch) {
+                            errorMessage += 'Título: ' + titleMatch[1] + '\n';
+                        }
+                    } else {
+                        errorMessage += 'Respuesta: ' + xhr.responseText.substring(0, 300) + '\n';
                     }
-                } catch (e) {
-                    errorMessage += '\n\nCódigo HTTP: ' + xhr.status;
-                    errorMessage += '\nDetalles: ' + xhr.responseText.substring(0, 200);
+                } else {
+                    errorMessage += 'Sin respuesta del servidor\n';
+                }
+
+                // Casos especiales
+                if (xhr.status === 419) {
+                    errorMessage += '\n⚠️ Error CSRF Token - La sesión expiró\n';
+                    errorMessage += 'Solución: Recarga la página (F5)';
+                } else if (xhr.status === 500) {
+                    errorMessage += '\n⚠️ Error interno del servidor\n';
+                    errorMessage += 'Ver consola del navegador para detalles';
+                } else if (xhr.status === 0) {
+                    errorMessage += '\n⚠️ No se pudo conectar al servidor\n';
+                    errorMessage += 'Verifica tu conexión a internet';
                 }
 
                 alert(errorMessage);
-                console.error('Detalles completos del error:', xhr);
-            });
+                console.error('🔴 ABRE ESTA LÍNEA PARA VER EL ERROR COMPLETO:', xhr);
+            }
+        });
     }
 
     // Mostrar producto local
