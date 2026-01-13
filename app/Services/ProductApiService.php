@@ -40,12 +40,18 @@ class ProductApiService
                 'barcode' => $barcode,
             ];
         } catch (\Exception $e) {
+            // Log a Laravel log normal
             Log::error('Error consultando OpenFoodFacts API', [
                 'barcode' => $barcode,
                 'error' => $e->getMessage(),
             ]);
+
+            // Además imprimilo a stdout para que aparezca en Deploy Logs
+            echo "[DEBUG] Error consultando API: " . $e->getMessage() . " (barcode: $barcode)\n";
+
             return null;
         }
+
     }
 
     /**
