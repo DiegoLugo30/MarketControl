@@ -33,9 +33,10 @@ if [ ! -f ".env" ]; then
 fi
 
 # Generar clave de aplicación si no existe
-if ! grep -q "APP_KEY=base64:" .env; then
-    echo "🔑 Generando clave de aplicación..."
-    php artisan key:generate --force
+if [ "$APP_ENV" != "production" ]; then
+    if ! grep -q "APP_KEY=base64:" .env; then
+        php artisan key:generate --force
+    fi
 fi
 
 # Configurar permisos
