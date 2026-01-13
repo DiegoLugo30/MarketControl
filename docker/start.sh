@@ -3,6 +3,7 @@
 set -e
 
 echo "🚀 Iniciando aplicación POS Barcode..."
+echo "PORT en Railway: ${PORT}"
 
 # Ir al directorio de la aplicación
 cd /var/www
