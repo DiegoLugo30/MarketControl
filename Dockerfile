@@ -57,8 +57,8 @@ RUN mkdir -p /var/www/storage/app/public \
 RUN chown -R $user:www-data /var/www
 RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-# Exponer puerto 9000 para PHP-FPM y 80 para Nginx
-EXPOSE 9000 80
+# Exponer puerto 9000 para PHP-FPM y 8080 para Nginx
+EXPOSE 9000 8080
 
 # Script de inicio
 COPY ./docker/start.sh /usr/local/bin/start
