@@ -19,7 +19,7 @@
             </div>
         @endif
 
-        <form action="{{ route('products.update', $product) }}" method="POST" id="product-form">
+        <form action="https://marketcontrol-production-3c1f.up.railway.app/products/{{ $product->id }}" method="POST" id="product-form">
             @csrf
             @method('PUT')
 
