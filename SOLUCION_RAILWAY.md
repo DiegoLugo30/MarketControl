@@ -29,13 +29,7 @@ Esto pasa por **uno de estos motivos**:
 **Copia y pega exactamente estas variables:**
 
 ```env
-SESSION_DRIVER=cookie
-SESSION_LIFETIME=120
-SESSION_ENCRYPT=false
-SESSION_COOKIE=marketcontrol_session
-SESSION_SECURE_COOKIE=true
-SESSION_SAME_SITE=lax
-SANCTUM_STATEFUL_DOMAINS=marketcontrol-production-3c1f.up.railway.app
+probe
 ```
 
 **Si ya existen, reemplázalas. Si no existen, agrégalas.**
