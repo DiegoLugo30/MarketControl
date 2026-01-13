@@ -194,11 +194,16 @@ $(document).ready(function() {
 
     // Buscar producto y agregarlo al carrito o pedir peso
     function searchAndAddProduct(code) {
+        // Forzar HTTPS en la URL
+        let url = '{{ route("barcode.search") }}';
+        url = url.replace('http://', 'https://');
+
         console.log('🔍 [POS] Buscando código:', code);
         console.log('📋 [POS] CSRF Token:', $('meta[name="csrf-token"]').attr('content'));
+        console.log('🔒 [POS] URL:', url);
 
         $.ajax({
-            url: '{{ route("barcode.search") }}',
+            url: url,
             type: 'POST',
             data: { barcode: code },
             headers: {
@@ -557,7 +562,11 @@ $(document).ready(function() {
             total: totalAmount.toFixed(2)
         };
 
-        $.post('{{ route("sales.complete") }}', saleData)
+        // Forzar HTTPS en la URL
+        let url = '{{ route("sales.complete") }}';
+        url = url.replace('http://', 'https://');
+
+        $.post(url, saleData)
             .done(function(response) {
                 if (response.success) {
                     $('#btn-view-receipt').attr('href', '/sales/' + response.sale_id + '/receipt');

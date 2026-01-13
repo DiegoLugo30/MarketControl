@@ -233,16 +233,21 @@ $(document).ready(function() {
 
     // Buscar código de barras
     function searchBarcode(barcode) {
+        // Forzar HTTPS en la URL
+        let url = '{{ route("barcode.search") }}';
+        url = url.replace('http://', 'https://');
+
         console.log('🔍 Iniciando búsqueda de código:', barcode);
         console.log('📋 CSRF Token:', $('meta[name="csrf-token"]').attr('content'));
-        console.log('🌐 URL:', '{{ route("barcode.search") }}');
+        console.log('🌐 URL original:', '{{ route("barcode.search") }}');
+        console.log('🔒 URL forzada HTTPS:', url);
 
         $('#loading').removeClass('hidden');
         $('#result').addClass('hidden');
         $('#result-found, #result-api, #result-not-found').addClass('hidden');
 
         $.ajax({
-            url: '{{ route("barcode.search") }}',
+            url: url,
             type: 'POST',
             data: { barcode: barcode },
             headers: {
