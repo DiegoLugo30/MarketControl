@@ -41,6 +41,12 @@ WORKDIR /var/www
 # Copiar archivos del proyecto
 COPY --chown=$user:$user . /var/www
 
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --prefer-dist \
+    --optimize-autoloader
+
 # Copiar configuración de Nginx
 COPY ./docker/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY ./docker/nginx/default.conf /etc/nginx/conf.d/default.conf
