@@ -73,9 +73,7 @@ class ProductController extends Controller
 
         $product = Product::create($validated);
 
-        return redirect()
-            ->route('products.edit', $product)
-            ->with('success', 'Producto creado exitosamente');
+        return redirect()->back()->with('success', 'Producto creado correctamente.');
     }
 
     /**

@@ -193,8 +193,8 @@
                     <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
                         <i class="fas fa-save"></i> Actualizar Producto
                     </button>
-                    <a href="{{ route('products.index') }}" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
-                        <i class="fas fa-times"></i> Cancelar
+                    <a href="https://marketcontrol-production-3c1f.up.railway.app/products" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
+                    <i class="fas fa-times"></i> Cancelar
                     </a>
                 </div>
 
@@ -204,7 +204,7 @@
             </div>
         </form>
 
-        <form id="delete-form" action="{{ route('products.destroy', $product) }}" method="POST" class="hidden">
+        <form id="delete-form" action="https://marketcontrol-production-3c1f.up.railway.app/products/{{ $product->id }}" method="POST" class="hidden">
             @csrf
             @method('DELETE')
         </form>

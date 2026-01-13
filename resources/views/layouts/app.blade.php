@@ -20,22 +20,22 @@
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center py-4">
                 <div class="flex items-center space-x-4">
-                    <a href="{{ route('home') }}" class="text-2xl font-bold">
-                        <i class="fas fa-cash-register"></i> Arima Store
+                    <a href="https://marketcontrol-production-3c1f.up.railway.app/" class="text-2xl font-bold">
+                    <i class="fas fa-cash-register"></i> Arima Store
                     </a>
                 </div>
                 <div class="flex space-x-4">
-                    <a href="{{ route('home') }}" class="hover:bg-blue-700 px-4 py-2 rounded transition">
-                        <i class="fas fa-shopping-cart"></i> Punto de Venta
+                    <a href="https://marketcontrol-production-3c1f.up.railway.app/" class="hover:bg-blue-700 px-4 py-2 rounded transition">
+                    <i class="fas fa-shopping-cart"></i> Punto de Venta
                     </a>
-                    <a href="{{ route('barcode.scan') }}" class="hover:bg-blue-700 px-4 py-2 rounded transition">
+                    <a href="https://marketcontrol-production-3c1f.up.railway.app/barcode/scan" class="hover:bg-blue-700 px-4 py-2 rounded transition">
                         <i class="fas fa-barcode"></i> Escanear
                     </a>
-                    <a href="{{ route('products.index') }}" class="hover:bg-blue-700 px-4 py-2 rounded transition">
-                        <i class="fas fa-box"></i> Productos
+                    <a href="https://marketcontrol-production-3c1f.up.railway.app/products" class="hover:bg-blue-700 px-4 py-2 rounded transition">
+                    <i class="fas fa-box"></i> Productos
                     </a>
-                    <a href="{{ route('sales.index') }}" class="hover:bg-blue-700 px-4 py-2 rounded transition">
-                        <i class="fas fa-receipt"></i> Ventas
+                    <a href="https://marketcontrol-production-3c1f.up.railway.app/sales" class="hover:bg-blue-700 px-4 py-2 rounded transition">
+                    <i class="fas fa-receipt"></i> Ventas
                     </a>
                 </div>
             </div>

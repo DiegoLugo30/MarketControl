@@ -95,8 +95,8 @@
             <div class="text-center py-12 text-gray-500">
                 <i class="fas fa-box-open text-6xl mb-4"></i>
                 <p class="text-xl">No hay productos registrados</p>
-                <a href="{{ route('products.create') }}" class="mt-4 inline-block bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
-                    Crear primer producto
+                <a href="https://marketcontrol-production-3c1f.up.railway.app/products/create" class="mt-4 inline-block bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+                Crear primer producto
                 </a>
             </div>
         @endif

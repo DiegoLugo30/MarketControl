@@ -148,7 +148,7 @@
                 <p class="text-gray-700 mb-4">
                     El código <strong id="notfound-barcode"></strong> no existe en la base de datos ni en fuentes externas.
                 </p>
-                <form id="form-manual-create" action="{{ route('products.store') }}" method="POST">
+                <form id="form-manual-create" action="https://marketcontrol-production-3c1f.up.railway.app/products" method="POST">
                     @csrf
                     <input type="hidden" name="barcode" id="manual-barcode">
                     <input type="hidden" name="internal_code" id="manual-internal-code">
