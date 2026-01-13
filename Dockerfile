@@ -65,4 +65,7 @@ EXPOSE 9000 8080
 COPY ./docker/start.sh /usr/local/bin/start
 RUN chmod +x /usr/local/bin/start
 
+# Crear socket directory para PHP-FPM
+RUN mkdir -p /var/run/php && chown -R www-data:www-data /var/run/php
+
 CMD ["/usr/local/bin/start"]
