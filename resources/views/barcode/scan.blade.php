@@ -106,7 +106,7 @@
                 <p class="text-gray-700 mb-4">
                     El producto se encontró en la base de datos externa. Completa los datos faltantes para registrarlo:
                 </p>
-                <form id="form-api-create" action="{{ route('products.store') }}" method="POST">
+                <form id="form-api-create" action="https://marketcontrol-production-3c1f.up.railway.app/products" method="POST">
                     @csrf
                     <input type="hidden" name="barcode" id="api-barcode">
                     <input type="hidden" name="internal_code" id="api-internal-code">
