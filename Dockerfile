@@ -5,7 +5,8 @@ ARG user=laravel
 ARG uid=1000
 
 # Instalar dependencias del sistema
-RUN apt-get update && apt-get install -y \
+RUN apt-get update \
+ && apt-get install -y \
     git \
     curl \
     bash \
@@ -19,6 +20,8 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     gettext \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
     #nginx
 
 # Limpiar cache
