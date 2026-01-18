@@ -110,25 +110,67 @@
                     @csrf
                     <input type="hidden" name="barcode" id="api-barcode">
                     <input type="hidden" name="internal_code" id="api-internal-code">
-                    <input type="hidden" name="is_weighted" value="0">
+
+                    <!-- Tipo de Producto -->
+                    <div class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <label class="block text-gray-700 font-semibold mb-2">
+                            Tipo de Producto *
+                        </label>
+                        <div class="flex space-x-4">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="is_weighted" value="0" checked class="mr-2 api-type-unit">
+                                <span><i class="fas fa-box"></i> Por Unidad</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="is_weighted" value="1" class="mr-2 api-type-weight">
+                                <span><i class="fas fa-weight"></i> Por Peso (kg)</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-2 gap-4">
-                        <div>
+                        <div class="col-span-2">
                             <label class="block text-sm font-semibold mb-1">Nombre</label>
                             <input type="text" name="name" id="api-name" class="w-full px-3 py-2 border rounded" readonly>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold mb-1">Precio *</label>
-                            <input type="number" name="price" step="0.01" min="0" class="w-full px-3 py-2 border rounded" required>
                         </div>
                         <div class="col-span-2">
                             <label class="block text-sm font-semibold mb-1">Descripción</label>
                             <textarea name="description" id="api-description" class="w-full px-3 py-2 border rounded" rows="2" readonly></textarea>
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold mb-1">Stock Inicial *</label>
-                            <input type="number" name="stock" min="0" class="w-full px-3 py-2 border rounded" required>
+                    </div>
+
+                    <!-- Campos para Producto por Unidad -->
+                    <div id="api-unit-fields" class="mt-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">Precio Unitario *</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2 text-gray-500">$</span>
+                                    <input type="number" name="price" step="0.01" min="0" class="w-full pl-8 pr-4 py-2 border rounded" id="api-price-unit">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">Stock Inicial *</label>
+                                <input type="number" name="stock" min="0" class="w-full px-3 py-2 border rounded" id="api-stock-unit">
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Campos para Producto Pesable -->
+                    <div id="api-weight-fields" class="mt-4 hidden">
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">Precio por Kilogramo *</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2 text-gray-500">$</span>
+                                <input type="number" name="price_per_kg" step="0.01" min="0" class="w-full pl-8 pr-4 py-2 border rounded" id="api-price-kg" disabled>
+                                <span class="absolute right-3 top-2 text-gray-500">/kg</span>
+                            </div>
+                            <p class="text-sm text-blue-600 mt-2">
+                                <i class="fas fa-info-circle"></i> Los productos pesables no requieren stock
+                            </p>
+                        </div>
+                    </div>
+
                     <div class="mt-4 flex space-x-4">
                         <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
                             <i class="fas fa-save"></i> Guardar Producto
@@ -152,7 +194,24 @@
                     @csrf
                     <input type="hidden" name="barcode" id="manual-barcode">
                     <input type="hidden" name="internal_code" id="manual-internal-code">
-                    <input type="hidden" name="is_weighted" value="0">
+
+                    <!-- Tipo de Producto -->
+                    <div class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <label class="block text-gray-700 font-semibold mb-2">
+                            Tipo de Producto *
+                        </label>
+                        <div class="flex space-x-4">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="is_weighted" value="0" checked class="mr-2 manual-type-unit">
+                                <span><i class="fas fa-box"></i> Por Unidad</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="is_weighted" value="1" class="mr-2 manual-type-weight">
+                                <span><i class="fas fa-weight"></i> Por Peso (kg)</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
                             <label class="block text-sm font-semibold mb-1">Nombre *</label>
@@ -162,15 +221,40 @@
                             <label class="block text-sm font-semibold mb-1">Descripción</label>
                             <textarea name="description" class="w-full px-3 py-2 border rounded" rows="2"></textarea>
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold mb-1">Precio *</label>
-                            <input type="number" name="price" step="0.01" min="0" class="w-full px-3 py-2 border rounded" required>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold mb-1">Stock Inicial *</label>
-                            <input type="number" name="stock" min="0" class="w-full px-3 py-2 border rounded" required>
+                    </div>
+
+                    <!-- Campos para Producto por Unidad -->
+                    <div id="manual-unit-fields" class="mt-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">Precio Unitario *</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2 text-gray-500">$</span>
+                                    <input type="number" name="price" step="0.01" min="0" class="w-full pl-8 pr-4 py-2 border rounded" id="manual-price-unit">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">Stock Inicial *</label>
+                                <input type="number" name="stock" min="0" class="w-full px-3 py-2 border rounded" id="manual-stock-unit">
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Campos para Producto Pesable -->
+                    <div id="manual-weight-fields" class="mt-4 hidden">
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">Precio por Kilogramo *</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2 text-gray-500">$</span>
+                                <input type="number" name="price_per_kg" step="0.01" min="0" class="w-full pl-8 pr-4 py-2 border rounded" id="manual-price-kg" disabled>
+                                <span class="absolute right-3 top-2 text-gray-500">/kg</span>
+                            </div>
+                            <p class="text-sm text-blue-600 mt-2">
+                                <i class="fas fa-info-circle"></i> Los productos pesables no requieren stock
+                            </p>
+                        </div>
+                    </div>
+
                     <div class="mt-4 flex space-x-4">
                         <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
                             <i class="fas fa-save"></i> Crear Producto
@@ -233,14 +317,11 @@ $(document).ready(function() {
 
     // Buscar código de barras
     function searchBarcode(barcode) {
-        // Forzar HTTPS en la URL
-        let url = '{{ route("barcode.search") }}';
-        url = url.replace('http://', 'https://');
+        const url = '{{ route("barcode.search") }}';
 
         console.log('🔍 Iniciando búsqueda de código:', barcode);
         console.log('📋 CSRF Token:', $('meta[name="csrf-token"]').attr('content'));
-        console.log('🌐 URL original:', '{{ route("barcode.search") }}');
-        console.log('🔒 URL forzada HTTPS:', url);
+        console.log('🌐 URL:', url);
 
         $('#loading').removeClass('hidden');
         $('#result').addClass('hidden');
@@ -455,6 +536,82 @@ $(document).ready(function() {
         // Limpiar el viewport
         $('#camera-viewport').empty();
     }
+
+    // ============================================
+    // Toggle de campos según tipo de producto
+    // ============================================
+
+    // Para formulario de API
+    function toggleApiFields() {
+        const isWeighted = $('.api-type-weight').is(':checked');
+        const unitFields = $('#api-unit-fields');
+        const weightFields = $('#api-weight-fields');
+        const priceUnit = $('#api-price-unit');
+        const stockUnit = $('#api-stock-unit');
+        const priceKg = $('#api-price-kg');
+
+        if (isWeighted) {
+            // Modo pesable
+            unitFields.addClass('hidden');
+            weightFields.removeClass('hidden');
+            priceUnit.prop('required', false).prop('disabled', true).val('');
+            stockUnit.prop('required', false).prop('disabled', true).val('');
+            priceKg.prop('required', true).prop('disabled', false);
+        } else {
+            // Modo por unidad
+            unitFields.removeClass('hidden');
+            weightFields.addClass('hidden');
+            priceUnit.prop('required', true).prop('disabled', false);
+            stockUnit.prop('required', true).prop('disabled', false);
+            priceKg.prop('required', false).prop('disabled', true).val('');
+        }
+    }
+
+    // Para formulario manual
+    function toggleManualFields() {
+        const isWeighted = $('.manual-type-weight').is(':checked');
+        const unitFields = $('#manual-unit-fields');
+        const weightFields = $('#manual-weight-fields');
+        const priceUnit = $('#manual-price-unit');
+        const stockUnit = $('#manual-stock-unit');
+        const priceKg = $('#manual-price-kg');
+
+        if (isWeighted) {
+            // Modo pesable
+            unitFields.addClass('hidden');
+            weightFields.removeClass('hidden');
+            priceUnit.prop('required', false).prop('disabled', true).val('');
+            stockUnit.prop('required', false).prop('disabled', true).val('');
+            priceKg.prop('required', true).prop('disabled', false);
+        } else {
+            // Modo por unidad
+            unitFields.removeClass('hidden');
+            weightFields.addClass('hidden');
+            priceUnit.prop('required', true).prop('disabled', false);
+            stockUnit.prop('required', true).prop('disabled', false);
+            priceKg.prop('required', false).prop('disabled', true).val('');
+        }
+    }
+
+    // Event listeners
+    $('input[name="is_weighted"]').on('change', function() {
+        // Detectar qué formulario se está usando
+        if ($(this).hasClass('api-type-unit') || $(this).hasClass('api-type-weight')) {
+            toggleApiFields();
+        } else if ($(this).hasClass('manual-type-unit') || $(this).hasClass('manual-type-weight')) {
+            toggleManualFields();
+        }
+    });
+
+    // Inicializar el estado de los campos cuando se muestran los formularios
+    $(document).on('DOMNodeInserted', function(e) {
+        if ($(e.target).is('#result-api:not(.hidden)')) {
+            toggleApiFields();
+        }
+        if ($(e.target).is('#result-not-found:not(.hidden)')) {
+            toggleManualFields();
+        }
+    });
 });
 </script>
 @endpush
