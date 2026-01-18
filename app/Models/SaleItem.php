@@ -15,12 +15,14 @@ class SaleItem extends Model
         'quantity',
         'weight',
         'price',
+        'item_discount',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
         'weight' => 'decimal:3',
         'price' => 'decimal:2',
+        'item_discount' => 'decimal:2',
     ];
 
     /**
@@ -40,7 +42,7 @@ class SaleItem extends Model
     }
 
     /**
-     * Calcular subtotal del item
+     * Calcular subtotal del item (antes de descuento)
      * Compatible con productos por unidad y por peso
      */
     public function getSubtotalAttribute(): float
@@ -52,6 +54,14 @@ class SaleItem extends Model
 
         // Producto por unidad
         return $this->quantity * $this->price;
+    }
+
+    /**
+     * Calcular el total del item después del descuento
+     */
+    public function getTotalWithDiscountAttribute(): float
+    {
+        return $this->subtotal - ($this->item_discount ?? 0);
     }
 
     /**

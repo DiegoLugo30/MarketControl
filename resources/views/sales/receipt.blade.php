@@ -25,6 +25,8 @@
                         <th class="px-4 py-2 text-center">Cantidad</th>
                         <th class="px-4 py-2 text-right">Precio</th>
                         <th class="px-4 py-2 text-right">Subtotal</th>
+                        <th class="px-4 py-2 text-right">Descuento</th>
+                        <th class="px-4 py-2 text-right">Total</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">
@@ -63,6 +65,16 @@
                             <td class="px-4 py-3 text-right font-semibold">
                                 ${{ number_format($item->subtotal, 2) }}
                             </td>
+                            <td class="px-4 py-3 text-right text-red-600">
+                                @if($item->item_discount > 0)
+                                    -${{ number_format($item->item_discount, 2) }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 text-right font-bold text-green-600">
+                                ${{ number_format($item->total_with_discount, 2) }}
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -79,6 +91,24 @@
                 <span class="text-gray-600">Total de Productos:</span>
                 <span class="font-semibold">{{ $sale->items->sum('quantity') }}</span>
             </div>
+
+            <hr class="my-3">
+
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-gray-600">Subtotal:</span>
+                <span class="font-semibold">${{ number_format($sale->calculateSubtotal(), 2) }}</span>
+            </div>
+
+            @if($sale->discount_amount > 0)
+                <div class="flex justify-between items-center mb-2 text-red-600">
+                    <span>Descuento Total:</span>
+                    <span class="font-semibold">-${{ number_format($sale->discount_amount, 2) }}</span>
+                </div>
+                @if($sale->discount_description)
+                    <p class="text-sm text-gray-500 italic mb-2">{{ $sale->discount_description }}</p>
+                @endif
+            @endif
+
             <div class="flex justify-between items-center text-2xl font-bold text-green-600 mt-4">
                 <span>TOTAL:</span>
                 <span>${{ number_format($sale->total, 2) }}</span>

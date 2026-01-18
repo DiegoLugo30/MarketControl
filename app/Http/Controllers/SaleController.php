@@ -30,7 +30,10 @@ class SaleController extends Controller
             'items.*.quantity' => 'nullable|integer|min:1',
             'items.*.weight' => 'nullable|numeric|min:0.001',
             'items.*.price' => 'required|numeric|min:0',
+            'items.*.item_discount' => 'nullable|numeric|min:0',
             'total' => 'required|numeric|min:0',
+            'discount_amount' => 'nullable|numeric|min:0',
+            'discount_description' => 'nullable|string|max:255',
         ]);
 
         try {
@@ -56,6 +59,8 @@ class SaleController extends Controller
             // Crear la venta
             $sale = Sale::create([
                 'total' => $validated['total'],
+                'discount_amount' => $validated['discount_amount'] ?? 0,
+                'discount_description' => $validated['discount_description'] ?? null,
                 'created_at' => now(),
             ]);
 
@@ -67,6 +72,7 @@ class SaleController extends Controller
                     'sale_id' => $sale->id,
                     'product_id' => $product->id,
                     'price' => $item['price'],
+                    'item_discount' => $item['item_discount'] ?? 0,
                 ];
 
                 // Determinar si es producto pesable o por unidad
