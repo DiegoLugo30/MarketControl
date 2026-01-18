@@ -317,7 +317,7 @@ $(document).ready(function() {
 
     // Buscar código de barras
     function searchBarcode(barcode) {
-        const url = '{{ route("barcode.search") }}';
+        const url = '{{ env('APP_URL') }}/barcode/search';
 
         console.log('🔍 Iniciando búsqueda de código:', barcode);
         console.log('📋 CSRF Token:', $('meta[name="csrf-token"]').attr('content'));
