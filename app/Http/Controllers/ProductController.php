@@ -18,7 +18,7 @@ class ProductController extends Controller
         $products = Product::query()
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('name', 'ILIKE', "%{$search}%")
+                    $q->whereRaw("unaccent(name) ILIKE unaccent(?)", ["%{$search}%"])
                       ->orWhere('internal_code', 'ILIKE', "%{$search}%")
                       ->orWhere('barcode', 'ILIKE', "%{$search}%");
                 });
