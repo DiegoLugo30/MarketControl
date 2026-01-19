@@ -103,9 +103,12 @@
                 <h2 class="text-xl font-bold text-yellow-800 mb-4">
                     <i class="fas fa-exclamation-triangle"></i> Producto No Registrado (Datos de API)
                 </h2>
-                <p class="text-gray-700 mb-4">
-                    El producto se encontró en la base de datos externa. Completa los datos faltantes para registrarlo:
-                </p>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <p class="text-blue-800 text-sm">
+                        <i class="fas fa-info-circle"></i>
+                        El producto se encontró en la base de datos externa. <strong>Puedes modificar todos los campos</strong> antes de guardarlo.
+                    </p>
+                </div>
                 <form id="form-api-create" action="{{ env('APP_URL') }}/products" method="POST">
                     @csrf
                     <input type="hidden" name="barcode" id="api-barcode">
@@ -129,13 +132,19 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="col-span-2">
-                            <label class="block text-sm font-semibold mb-1">Nombre</label>
-                            <input type="text" name="name" id="api-name" class="w-full px-3 py-2 border rounded" readonly>
+                        <div class="col-span-2 bg-white border-2 border-blue-200 rounded-lg p-3">
+                            <label class="block text-sm font-semibold mb-2">
+                                <i class="fas fa-edit text-blue-600"></i> Nombre *
+                                <span class="text-xs font-normal text-gray-500 ml-1">(editable)</span>
+                            </label>
+                            <input type="text" name="name" id="api-name" class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required placeholder="Ingresa o modifica el nombre del producto">
                         </div>
-                        <div class="col-span-2">
-                            <label class="block text-sm font-semibold mb-1">Descripción</label>
-                            <textarea name="description" id="api-description" class="w-full px-3 py-2 border rounded" rows="2" readonly></textarea>
+                        <div class="col-span-2 bg-white border-2 border-blue-200 rounded-lg p-3">
+                            <label class="block text-sm font-semibold mb-2">
+                                <i class="fas fa-edit text-blue-600"></i> Descripción
+                                <span class="text-xs font-normal text-gray-500 ml-1">(editable)</span>
+                            </label>
+                            <textarea name="description" id="api-description" class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="3" placeholder="Ingresa o modifica la descripción del producto"></textarea>
                         </div>
                     </div>
 
@@ -427,6 +436,11 @@ $(document).ready(function() {
         $('#api-name').val(product.name || 'Sin nombre');
         $('#api-description').val(product.description || '');
         $('#result-api').removeClass('hidden');
+
+        // Hacer focus en el campo de nombre para indicar que es editable
+        setTimeout(function() {
+            $('#api-name').focus().select();
+        }, 300);
     }
 
     // Mostrar producto no encontrado
