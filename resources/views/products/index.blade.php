@@ -31,7 +31,7 @@
                     <i class="fas fa-search"></i> Buscar
                 </button>
                 @if($search)
-                    <a href="{{ route('products.index') }}" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition">
+                    <a href="{{ env('APP_URL') }}/products/" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition">
                         <i class="fas fa-times"></i> Limpiar
                     </a>
                 @endif
@@ -44,7 +44,7 @@
                 <i class="fas fa-search text-6xl mb-4"></i>
                 <p class="text-xl mb-2">No se encontraron productos</p>
                 <p class="text-gray-400 mb-4">No hay productos que coincidan con "{{ $search }}"</p>
-                <a href="{{ env('APP_URL') }}/products/index" class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                <a href="{{ env('APP_URL') }}/products/" class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
                     Ver todos los productos
                 </a>
             </div>
@@ -160,7 +160,7 @@ $(document).ready(function() {
     searchInput.on('keydown', function(e) {
         if (e.key === 'Escape') {
             $(this).val('');
-            window.location.href = '{{ env('APP_URL') }}/products/index';
+            window.location.href = '{{ env('APP_URL') }}/products/';
         }
     });
 
