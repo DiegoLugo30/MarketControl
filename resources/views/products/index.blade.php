@@ -38,11 +38,6 @@
             </form>
         </div>
 
-        @if($search && $products->count() > 0)
-            <div class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3 text-blue-800">
-                <i class="fas fa-info-circle"></i> Se encontraron <strong>{{ $products->total() }}</strong> resultado(s) para "<strong>{{ $search }}</strong>"
-            </div>
-        @endif
 
         @if($search && $products->count() === 0)
             <div class="text-center py-12 text-gray-500">
@@ -148,6 +143,11 @@
 $(document).ready(function() {
     // Auto-focus en el campo de búsqueda
     const searchInput = $('input[name="search"]');
+
+    // Mostrar alerta si hay resultados de búsqueda
+    @if($search && $products->count() > 0)
+        showAlert('Se encontraron {{ $products->total() }} resultado(s) para "{{ $search }}"', 'info');
+    @endif
 
     // Si hay una búsqueda activa, seleccionar el texto al hacer foco
     if (searchInput.val()) {
