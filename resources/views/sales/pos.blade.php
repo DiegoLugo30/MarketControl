@@ -60,6 +60,32 @@
                         </div>
                         <hr>
                         <div class="flex justify-between items-center">
+                            <span class="text-gray-600">Subtotal:</span>
+                            <span class="font-semibold" id="subtotal-amount">$0.00</span>
+                        </div>
+
+                        <!-- Descuento Total -->
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">
+                                <i class="fas fa-tag"></i> Descuento Total (%)
+                            </label>
+                            <div class="flex items-center">
+                                <input
+                                    type="number"
+                                    id="total-discount-input"
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                                    placeholder="0"
+                                    step="1"
+                                    min="0"
+                                    max="100"
+                                    value="0"
+                                >
+                                <span class="ml-2 text-lg font-semibold text-gray-600">%</span>
+                            </div>
+                        </div>
+
+                        <hr class="border-gray-300">
+                        <div class="flex justify-between items-center">
                             <span class="text-xl font-bold text-gray-700">TOTAL:</span>
                             <span class="text-3xl font-bold text-green-600" id="total-amount">$0.00</span>
                         </div>
@@ -195,8 +221,7 @@ $(document).ready(function() {
     // Buscar producto y agregarlo al carrito o pedir peso
     function searchAndAddProduct(code) {
         // Forzar HTTPS en la URL
-        let url = '{{ route("barcode.search") }}';
-        url = url.replace('http://', 'https://');
+        let url = '{{ env('APP_URL') }}/barcode/search';
 
         console.log('🔍 [POS] Buscando código:', code);
         console.log('📋 [POS] CSRF Token:', $('meta[name="csrf-token"]').attr('content'));
@@ -405,7 +430,8 @@ $(document).ready(function() {
                 quantity: 1,
                 stock: product.stock,
                 is_weighted: false,
-                weight: null
+                weight: null,
+                item_discount: 0
             });
         }
 
@@ -423,7 +449,8 @@ $(document).ready(function() {
             quantity: 1,
             stock: 0,
             is_weighted: true,
-            weight: weight
+            weight: weight,
+            item_discount: 0
         });
 
         renderCart();
@@ -442,6 +469,9 @@ $(document).ready(function() {
 
             cart.forEach((item, index) => {
                 const subtotal = item.is_weighted ? item.price : (item.quantity * item.price);
+                const itemDiscountPercent = item.item_discount || 0;
+                const itemDiscountAmount = (subtotal * itemDiscountPercent / 100);
+                const totalWithDiscount = subtotal - itemDiscountAmount;
                 const quantityText = item.is_weighted
                     ? `<span class="text-blue-600">${item.weight.toFixed(3)} kg</span>`
                     : `${item.quantity} ud.`;
@@ -462,7 +492,7 @@ $(document).ready(function() {
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
-                        <div class="flex justify-between items-center">
+                        <div class="flex justify-between items-center mb-2">
                             <div class="flex items-center space-x-2">
                                 ${!item.is_weighted ? `
                                     <button class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded" onclick="decrementQuantity(${index})">
@@ -478,7 +508,31 @@ $(document).ready(function() {
                             </div>
                             <div class="text-right">
                                 <p class="text-sm text-gray-500">Subtotal</p>
-                                <p class="font-bold text-green-600 text-xl">$${subtotal.toFixed(2)}</p>
+                                <p class="font-bold text-gray-700 text-lg">$${subtotal.toFixed(2)}</p>
+                            </div>
+                        </div>
+
+                        <!-- Descuento del Item -->
+                        <div class="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded p-2">
+                            <label class="text-xs text-gray-600 whitespace-nowrap">
+                                <i class="fas fa-tag"></i> Desc.
+                            </label>
+                            <div class="flex items-center">
+                                <input
+                                    type="number"
+                                    class="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-center item-discount-input"
+                                    data-index="${index}"
+                                    placeholder="0"
+                                    step="1"
+                                    min="0"
+                                    max="100"
+                                    value="${itemDiscountPercent}"
+                                >
+                                <span class="ml-1 text-sm font-semibold text-gray-600">%</span>
+                            </div>
+                            <div class="flex-1 text-right">
+                                <p class="text-xs text-gray-500">Total</p>
+                                <p class="font-bold text-green-600 text-lg">$${totalWithDiscount.toFixed(2)}</p>
                             </div>
                         </div>
                     </div>
@@ -490,6 +544,32 @@ $(document).ready(function() {
         }
 
         updateTotals();
+
+        // Event listener para descuentos de items
+        $('.item-discount-input').off('input').on('input', function() {
+            const index = parseInt($(this).data('index'));
+            let discountPercent = parseFloat($(this).val()) || 0;
+
+            // Validar que el porcentaje no sea mayor a 100
+            if (discountPercent > 100) {
+                discountPercent = 100;
+                $(this).val(100);
+            }
+
+            cart[index].item_discount = discountPercent;
+
+            // Actualizar solo el total del item específico sin re-renderizar todo
+            const item = cart[index];
+            const itemSubtotal = item.is_weighted ? item.price : (item.quantity * item.price);
+            const itemDiscountAmount = (itemSubtotal * discountPercent / 100);
+            const totalWithDiscount = itemSubtotal - itemDiscountAmount;
+
+            // Actualizar solo el display del total del item
+            $(this).closest('.cart-item').find('.font-bold.text-green-600.text-lg').text('$' + totalWithDiscount.toFixed(2));
+
+            // Actualizar los totales generales
+            updateTotals();
+        });
     }
 
     // Incrementar cantidad (solo productos normales)
@@ -526,19 +606,38 @@ $(document).ready(function() {
         const totalQuantity = cart.reduce((sum, item) => {
             return item.is_weighted ? sum + 1 : sum + item.quantity;
         }, 0);
-        const totalAmount = cart.reduce((sum, item) => {
-            return item.is_weighted ? sum + item.price : sum + (item.quantity * item.price);
+
+        // Calcular subtotal (después de descuentos individuales)
+        const subtotal = cart.reduce((sum, item) => {
+            const itemSubtotal = item.is_weighted ? item.price : (item.quantity * item.price);
+            const itemDiscountPercent = item.item_discount || 0;
+            const itemDiscountAmount = (itemSubtotal * itemDiscountPercent / 100);
+            return sum + itemSubtotal - itemDiscountAmount;
         }, 0);
+
+        // Obtener porcentaje de descuento total
+        const totalDiscountPercent = parseFloat($('#total-discount-input').val()) || 0;
+        const totalDiscountAmount = (subtotal * totalDiscountPercent / 100);
+
+        // Calcular total final
+        const totalAmount = Math.max(0, subtotal - totalDiscountAmount);
 
         $('#total-items').text(totalItems);
         $('#total-quantity').text(totalQuantity);
+        $('#subtotal-amount').text('$' + subtotal.toFixed(2));
         $('#total-amount').text('$' + totalAmount.toFixed(2));
     }
+
+    // Event listener para descuento total
+    $('#total-discount-input').on('input', function() {
+        updateTotals();
+    });
 
     // Limpiar carrito
     $('#btn-clear-cart').click(function() {
         if (cart.length > 0 && confirm('¿Estás seguro de limpiar el carrito?')) {
             cart = [];
+            $('#total-discount-input').val(0);
             renderCart();
             focusBarcodeInput();
         }
@@ -548,23 +647,39 @@ $(document).ready(function() {
     $('#btn-complete-sale').click(function() {
         if (cart.length === 0) return;
 
-        const totalAmount = cart.reduce((sum, item) => {
-            return item.is_weighted ? sum + item.price : sum + (item.quantity * item.price);
+        // Calcular subtotal con descuentos de items (convertir porcentajes a montos)
+        const subtotal = cart.reduce((sum, item) => {
+            const itemSubtotal = item.is_weighted ? item.price : (item.quantity * item.price);
+            const itemDiscountPercent = item.item_discount || 0;
+            const itemDiscountAmount = (itemSubtotal * itemDiscountPercent / 100);
+            return sum + itemSubtotal - itemDiscountAmount;
         }, 0);
 
+        // Calcular descuento total en pesos
+        const totalDiscountPercent = parseFloat($('#total-discount-input').val()) || 0;
+        const totalDiscountAmount = (subtotal * totalDiscountPercent / 100);
+        const totalAmount = Math.max(0, subtotal - totalDiscountAmount);
+
         const saleData = {
-            items: cart.map(item => ({
-                product_id: item.product_id,
-                quantity: item.is_weighted ? 1 : item.quantity,
-                weight: item.is_weighted ? item.weight : null,
-                price: item.is_weighted ? item.price : (item.quantity * item.price)
-            })),
-            total: totalAmount.toFixed(2)
+            items: cart.map(item => {
+                const itemPrice = item.is_weighted ? item.price : (item.quantity * item.price);
+                const itemDiscountPercent = item.item_discount || 0;
+                const itemDiscountAmount = (itemPrice * itemDiscountPercent / 100);
+
+                return {
+                    product_id: item.product_id,
+                    quantity: item.is_weighted ? 1 : item.quantity,
+                    weight: item.is_weighted ? item.weight : null,
+                    price: itemPrice,
+                    item_discount: itemDiscountAmount
+                };
+            }),
+            total: totalAmount.toFixed(2),
+            discount_amount: totalDiscountAmount.toFixed(2),
+            discount_description: totalDiscountPercent > 0 ? `Descuento ${totalDiscountPercent}% aplicado en punto de venta` : null
         };
 
-        // Forzar HTTPS en la URL
-        let url = '{{ route("sales.complete") }}';
-        url = url.replace('http://', 'https://');
+        const url = '{{ env('APP_URL') }}/sales/complete';
 
         $.post(url, saleData)
             .done(function(response) {
@@ -590,11 +705,45 @@ $(document).ready(function() {
     });
 
     // Mantener foco en el input
+    let isSelecting = false;
+
+    $(document).on('mousedown', function(e) {
+        // Detectar si se está iniciando una selección en un input
+        if ($(e.target).is('input')) {
+            isSelecting = true;
+        }
+    });
+
+    $(document).on('mouseup', function(e) {
+        // Esperar un momento para que la selección se complete
+        setTimeout(function() {
+            isSelecting = false;
+        }, 100);
+    });
+
     $(document).on('click', function(e) {
         // No enfocar si estamos en el modal de peso
         if (!$('#weight-modal').hasClass('hidden')) {
             return;
         }
+
+        // No enfocar si hay texto seleccionado
+        if (window.getSelection().toString().length > 0) {
+            return;
+        }
+
+        // No enfocar si se está seleccionando texto
+        if (isSelecting) {
+            return;
+        }
+
+        // No enfocar si estamos escribiendo en inputs de descuento
+        if ($(e.target).hasClass('item-discount-input') ||
+            $(e.target).is('#total-discount-input') ||
+            $(e.target).is('input[type="number"]')) {
+            return;
+        }
+
         focusBarcodeInput();
     });
 
