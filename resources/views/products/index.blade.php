@@ -16,8 +16,8 @@
 
         <!-- Buscador -->
         <div class="mb-6">
-            <form action="{{ env('APP_URL') }}/products/index" method="GET" class="flex gap-3">
-                <div class="flex-1 relative">
+            <form action="{{ route('products.index') }}" method="GET" class="flex gap-3">
+            <div class="flex-1 relative">
                     <input
                         type="text"
                         name="search"
