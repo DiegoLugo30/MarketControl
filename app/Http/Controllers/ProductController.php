@@ -11,10 +11,23 @@ class ProductController extends Controller
     /**
      * Listar todos los productos
      */
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::orderBy('name')->paginate(20);
-        return view('products.index', compact('products'));
+        $search = $request->input('search');
+
+        $products = Product::query()
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'ILIKE', "%{$search}%")
+                      ->orWhere('internal_code', 'ILIKE', "%{$search}%")
+                      ->orWhere('barcode', 'ILIKE', "%{$search}%");
+                });
+            })
+            ->orderBy('name')
+            ->paginate(20)
+            ->appends(['search' => $search]);
+
+        return view('products.index', compact('products', 'search'));
     }
 
     /**
