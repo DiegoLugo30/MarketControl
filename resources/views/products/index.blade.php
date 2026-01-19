@@ -16,13 +16,13 @@
 
         <!-- Buscador -->
         <div class="mb-6">
-            <form action="{{ route('products.index') }}" method="GET" class="flex gap-3">
+            <form action="{{ env('APP_URL') }}/products/index" method="GET" class="flex gap-3">
                 <div class="flex-1 relative">
                     <input
                         type="text"
                         name="search"
                         value="{{ $search ?? '' }}"
-                        placeholder="Buscar por código interno, código de barras o nombre..."
+                        placeholder="  Buscar por código interno, código de barras o nombre..."
                         class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                     <i class="fas fa-search absolute left-3 top-4 text-gray-400"></i>
@@ -44,7 +44,7 @@
                 <i class="fas fa-search text-6xl mb-4"></i>
                 <p class="text-xl mb-2">No se encontraron productos</p>
                 <p class="text-gray-400 mb-4">No hay productos que coincidan con "{{ $search }}"</p>
-                <a href="{{ route('products.index') }}" class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                <a href="{{ env('APP_URL') }}/products/index" class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
                     Ver todos los productos
                 </a>
             </div>
@@ -160,7 +160,7 @@ $(document).ready(function() {
     searchInput.on('keydown', function(e) {
         if (e.key === 'Escape') {
             $(this).val('');
-            window.location.href = '{{ route("products.index") }}';
+            window.location.href = '{{ env('APP_URL') }}/products/index';
         }
     });
 
