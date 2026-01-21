@@ -120,11 +120,187 @@ class SaleController extends Controller
     }
 
     /**
-     * Listar ventas
+     * Listar ventas con filtros de fecha
      */
-    public function index()
+    public function index(Request $request)
     {
-        $sales = Sale::orderBy('created_at', 'desc')->paginate(20);
+        $query = Sale::query();
+
+        // Filtrar por fecha desde
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        // Filtrar por fecha hasta
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $sales = $query->orderBy('created_at', 'desc')->paginate(20);
+
+        // Mantener los parámetros de búsqueda en la paginación
+        $sales->appends($request->only(['date_from', 'date_to']));
+
         return view('sales.index', compact('sales'));
+    }
+
+    /**
+     * Exportar ventas a Excel (.xls) con estilos y colores
+     */
+    public function export(Request $request)
+    {
+        $query = Sale::with('items.product');
+
+        // Filtrar por fecha desde
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        // Filtrar por fecha hasta
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $sales = $query->orderBy('created_at', 'desc')->get();
+
+        // Determinar el nombre del archivo según el tipo de reporte
+        $type = $request->get('type', 'custom');
+        $fileName = 'ventas_';
+
+        if ($type === 'daily') {
+            $fileName .= 'diario_' . date('Y-m-d');
+        } elseif ($type === 'monthly') {
+            $fileName .= 'mensual_' . date('Y-m');
+        } else {
+            $fileName .= 'personalizado_' . date('Y-m-d_His');
+        }
+
+        $fileName .= '.xls';
+
+        // Configurar headers para descarga de archivo Excel
+        $headers = [
+            'Content-Type' => 'application/vnd.ms-excel; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0'
+        ];
+
+        $callback = function() use ($sales) {
+            // Iniciar documento HTML/Excel con estilos
+            echo '<!DOCTYPE html>';
+            echo '<html>';
+            echo '<head>';
+            echo '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />';
+            echo '<style>';
+            echo 'body { font-family: Arial, sans-serif; }';
+            echo 'table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }';
+            echo 'th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }';
+            echo '.header { background-color: #2563eb; color: white; font-weight: bold; text-align: center; font-size: 18px; padding: 12px; }';
+            echo '.info-label { background-color: #3b82f6; color: white; font-weight: bold; padding: 8px; }';
+            echo '.info-value { background-color: #dbeafe; padding: 8px; }';
+            echo '.table-header { background-color: #1e40af; color: white; font-weight: bold; text-align: center; }';
+            echo '.table-header-green { background-color: #059669; color: white; font-weight: bold; text-align: center; }';
+            echo '.total-row { background-color: #fef3c7; font-weight: bold; }';
+            echo '.data-row:nth-child(even) { background-color: #f9fafb; }';
+            echo '.data-row:nth-child(odd) { background-color: #ffffff; }';
+            echo '.number { text-align: right; }';
+            echo '.center { text-align: center; }';
+            echo '.money { color: #059669; font-weight: bold; }';
+            echo '</style>';
+            echo '</head>';
+            echo '<body>';
+
+            // Encabezado del reporte
+            echo '<table>';
+            echo '<tr><td colspan="7" class="header">📊 REPORTE DE VENTAS</td></tr>';
+            echo '<tr><td class="info-label">Generado el:</td><td colspan="6" class="info-value">' . date('d/m/Y H:i:s') . '</td></tr>';
+            echo '<tr><td class="info-label">Total de ventas:</td><td colspan="6" class="info-value">' . count($sales) . '</td></tr>';
+            echo '<tr><td class="info-label">Total general:</td><td colspan="6" class="info-value money">$' . number_format($sales->sum('total'), 2) . '</td></tr>';
+            echo '</table>';
+
+            // Tabla principal de ventas
+            echo '<br/>';
+            echo '<table>';
+            echo '<thead>';
+            echo '<tr>';
+            echo '<th class="table-header">ID Venta</th>';
+            echo '<th class="table-header">Fecha</th>';
+            echo '<th class="table-header">Hora</th>';
+            echo '<th class="table-header">Cantidad Items</th>';
+            echo '<th class="table-header">Subtotal</th>';
+            echo '<th class="table-header">Descuento</th>';
+            echo '<th class="table-header">Total</th>';
+            echo '</tr>';
+            echo '</thead>';
+            echo '<tbody>';
+
+            foreach ($sales as $sale) {
+                echo '<tr class="data-row">';
+                echo '<td class="center">' . $sale->id . '</td>';
+                echo '<td>' . $sale->created_at->format('d/m/Y') . '</td>';
+                echo '<td class="center">' . $sale->created_at->format('H:i:s') . '</td>';
+                echo '<td class="center">' . $sale->items->count() . '</td>';
+                echo '<td class="number">$' . number_format($sale->calculateSubtotal(), 2) . '</td>';
+                echo '<td class="number">$' . number_format($sale->discount_amount, 2) . '</td>';
+                echo '<td class="number money">$' . number_format($sale->total, 2) . '</td>';
+                echo '</tr>';
+            }
+
+            echo '</tbody>';
+            echo '</table>';
+
+            // Detalle de productos vendidos
+            echo '<br/><br/>';
+            echo '<table>';
+            echo '<tr><td colspan="9" class="header">📦 DETALLE DE PRODUCTOS VENDIDOS</td></tr>';
+            echo '<thead>';
+            echo '<tr>';
+            echo '<th class="table-header-green">ID Venta</th>';
+            echo '<th class="table-header-green">Fecha</th>';
+            echo '<th class="table-header-green">Producto</th>';
+            echo '<th class="table-header-green">Código Barras</th>';
+            echo '<th class="table-header-green">Cantidad/Peso</th>';
+            echo '<th class="table-header-green">Precio Unitario</th>';
+            echo '<th class="table-header-green">Subtotal Item</th>';
+            echo '<th class="table-header-green">Descuento Item</th>';
+            echo '<th class="table-header-green">Total Item</th>';
+            echo '</tr>';
+            echo '</thead>';
+            echo '<tbody>';
+
+            foreach ($sales as $sale) {
+                foreach ($sale->items as $item) {
+                    $product = $item->product;
+                    $quantity = $item->isWeighted()
+                        ? number_format($item->weight, 3) . ' kg'
+                        : $item->quantity . ' ud.';
+
+                    $pricePerUnit = $item->isWeighted()
+                        ? number_format($product->price_per_kg, 2)
+                        : number_format($product->price, 2);
+
+                    echo '<tr class="data-row">';
+                    echo '<td class="center">' . $sale->id . '</td>';
+                    echo '<td>' . $sale->created_at->format('d/m/Y H:i:s') . '</td>';
+                    echo '<td>' . htmlspecialchars($product->name) . '</td>';
+                    echo '<td class="center">' . ($product->barcode ?? $product->internal_code) . '</td>';
+                    echo '<td class="center">' . $quantity . '</td>';
+                    echo '<td class="number">$' . $pricePerUnit . '</td>';
+                    echo '<td class="number">$' . number_format($item->subtotal, 2) . '</td>';
+                    echo '<td class="number">$' . number_format($item->item_discount, 2) . '</td>';
+                    echo '<td class="number money">$' . number_format($item->total_with_discount, 2) . '</td>';
+                    echo '</tr>';
+                }
+            }
+
+            echo '</tbody>';
+            echo '</table>';
+
+            echo '</body>';
+            echo '</html>';
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

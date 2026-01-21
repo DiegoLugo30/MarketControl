@@ -89,3 +89,5 @@ rebuild: down build up ## Reconstruir completamente
 init: build up migrate ## Inicializar proyecto desde cero
 	@echo "$(GREEN)✅ Proyecto inicializado$(NC)"
 	@echo "$(GREEN)Accede a: http://localhost:8000$(NC)"
+
+php: docker compose exec app bash
