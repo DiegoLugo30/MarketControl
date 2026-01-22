@@ -14,6 +14,60 @@
             </a>
         </div>
 
+        <!-- Filtros de Fecha y Botones de Exportación -->
+        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+            <form method="GET" action="{{ env('APP_URL') }}/sales/" class="space-y-4">
+                <!-- Filtros de Fecha -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar"></i> Fecha Desde
+                        </label>
+                        <input type="date" name="date_from" value="{{ request('date_from') }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar"></i> Fecha Hasta
+                        </label>
+                        <input type="date" name="date_to" value="{{ request('date_to') }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                            <i class="fas fa-filter"></i> Filtrar
+                        </button>
+                    </div>
+                    <div class="flex items-end">
+                        <a href="{{ env('APP_URL') }}/sales/" class="w-full bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition text-center">
+                            <i class="fas fa-times"></i> Limpiar
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Botones de Exportación -->
+                <div class="border-t pt-4">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">
+                        <i class="fas fa-file-excel"></i> Descargar Reportes
+                    </h3>
+                    <div class="flex flex-wrap gap-3">
+                        <button type="button" onclick="exportReport('daily')"
+                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                            <i class="fas fa-download"></i> Reporte Diario
+                        </button>
+                        <button type="button" onclick="exportReport('monthly')"
+                                class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
+                            <i class="fas fa-download"></i> Reporte Mensual
+                        </button>
+                        <button type="button" onclick="exportReport('custom')"
+                                class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition">
+                            <i class="fas fa-download"></i> Reporte Personalizado
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
         @if($sales->count() > 0)
             <div class="overflow-x-auto">
                 <table class="w-full">
@@ -51,7 +105,7 @@
                                     ${{ number_format($sale->total, 2) }}
                                 </td>
                                 <td class="px-4 py-3 text-center">
-                                    <a href="{{ route('sales.receipt', $sale->id) }}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm">
+                                    <a href="{{ env('APP_URL') }}/sales/{{ $sale->id }}/receipt/" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm">
                                         <i class="fas fa-eye"></i> Ver Recibo
                                     </a>
                                 </td>
@@ -77,11 +131,35 @@
             <div class="text-center py-12 text-gray-500">
                 <i class="fas fa-receipt text-6xl mb-4 opacity-50"></i>
                 <p class="text-xl">No hay ventas registradas</p>
-                <a href="{{ route('home') }}" class="mt-4 inline-block bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+                <a href="{{ env('APP_URL') }}/home" class="mt-4 inline-block bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
                     Realizar primera venta
                 </a>
             </div>
         @endif
     </div>
 </div>
+
+<script>
+function exportReport(type) {
+    const dateFrom = document.querySelector('input[name="date_from"]').value;
+    const dateTo = document.querySelector('input[name="date_to"]').value;
+
+    let url = '{{ env('APP_URL') }}/sales/export?type=' + type;
+
+    if (type === 'custom') {
+        if (dateFrom) url += '&date_from=' + dateFrom;
+        if (dateTo) url += '&date_to=' + dateTo;
+    } else if (type === 'daily') {
+        const today = new Date().toISOString().split('T')[0];
+        url += '&date_from=' + today + '&date_to=' + today;
+    } else if (type === 'monthly') {
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+        url += '&date_from=' + firstDay + '&date_to=' + lastDay;
+    }
+
+    window.location.href = url;
+}
+</script>
 @endsection

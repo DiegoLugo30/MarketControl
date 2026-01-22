@@ -46,3 +46,4 @@ Route::post('/test-post', function(\Illuminate\Http\Request $request) {
 Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
 Route::post('/sales/complete', [SaleController::class, 'complete'])->name('sales.complete');
 Route::get('/sales/{id}/receipt', [SaleController::class, 'receipt'])->name('sales.receipt');
+Route::get('/sales/export', [SaleController::class, 'export'])->name('sales.export');
