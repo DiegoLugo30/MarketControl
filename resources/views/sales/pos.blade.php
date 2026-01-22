@@ -89,6 +89,18 @@
                             <span class="text-xl font-bold text-gray-700">TOTAL:</span>
                             <span class="text-3xl font-bold text-green-600" id="total-amount">$0.00</span>
                         </div>
+
+                        <!-- Método de Pago -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-credit-card"></i> Método de Pago
+                            </label>
+                            <select id="payment-method" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="efectivo" selected>💵 Efectivo</option>
+                                <option value="debito">💳 Débito</option>
+                                <option value="transferencia">🏦 Transferencia</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="space-y-3">
@@ -662,21 +674,22 @@ $(document).ready(function() {
 
         const saleData = {
             items: cart.map(item => {
-                const itemPrice = item.is_weighted ? item.price : (item.quantity * item.price);
+                const itemSubtotal = item.is_weighted ? item.price : (item.quantity * item.price);
                 const itemDiscountPercent = item.item_discount || 0;
-                const itemDiscountAmount = (itemPrice * itemDiscountPercent / 100);
+                const itemDiscountAmount = (itemSubtotal * itemDiscountPercent / 100);
 
                 return {
                     product_id: item.product_id,
                     quantity: item.is_weighted ? 1 : item.quantity,
                     weight: item.is_weighted ? item.weight : null,
-                    price: itemPrice,
+                    price: item.price,  // Enviar precio unitario, no el total
                     item_discount: itemDiscountAmount
                 };
             }),
             total: totalAmount.toFixed(2),
             discount_amount: totalDiscountAmount.toFixed(2),
-            discount_description: totalDiscountPercent > 0 ? `Descuento ${totalDiscountPercent}% aplicado en punto de venta` : null
+            discount_description: totalDiscountPercent > 0 ? `Descuento ${totalDiscountPercent}% aplicado en punto de venta` : null,
+            payment_method: $('#payment-method').val()
         };
 
         const url = '{{ env('APP_URL') }}/sales/complete';
@@ -706,6 +719,7 @@ $(document).ready(function() {
 
     // Mantener foco en el input
     let isSelecting = false;
+    let isUsingPaymentMethod = false;
 
     $(document).on('mousedown', function(e) {
         // Detectar si se está iniciando una selección en un input
@@ -737,15 +751,42 @@ $(document).ready(function() {
             return;
         }
 
-        // No enfocar si estamos escribiendo en inputs de descuento
+        // No enfocar si estamos usando el selector de método de pago
+        if (isUsingPaymentMethod) {
+            return;
+        }
+
+        // No enfocar si estamos escribiendo en inputs de descuento o selector de método de pago
         if ($(e.target).hasClass('item-discount-input') ||
             $(e.target).is('#total-discount-input') ||
-            $(e.target).is('input[type="number"]')) {
+            $(e.target).is('#payment-method') ||
+            $(e.target).is('input[type="number"]') ||
+            $(e.target).is('select')) {
             return;
         }
 
         focusBarcodeInput();
     });
+
+    // Prevenir auto-focus al interactuar con el selector de método de pago
+    $('#payment-method').on('mousedown focus click', function(e) {
+        e.stopPropagation();
+        isUsingPaymentMethod = true;
+    });
+
+    $('#payment-method').on('blur change', function() {
+        setTimeout(function() {
+            isUsingPaymentMethod = false;
+        }, 200);
+    });
+
+    // Modificar la función de auto-focus para considerar el selector de pago
+    const originalFocusBarcodeInput = focusBarcodeInput;
+    focusBarcodeInput = function() {
+        if (!isUsingPaymentMethod) {
+            originalFocusBarcodeInput();
+        }
+    };
 
     focusBarcodeInput();
 });

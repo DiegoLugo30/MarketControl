@@ -14,6 +14,7 @@ class Sale extends Model
         'created_at',
         'discount_amount',
         'discount_description',
+        'payment_method',
     ];
 
     protected $casts = [
@@ -46,10 +47,15 @@ class Sale extends Model
      */
     public function calculateSubtotal(): float
     {
-        return $this->items->sum(function ($item) {
-            $itemTotal = $item->is_weighted ? $item->price : ($item->quantity * $item->price);
-            return $itemTotal - $item->item_discount;
-        });
+        return $this->items->sum('subtotal');
+    }
+
+    /**
+     * Calcular el total de descuentos de items
+     */
+    public function calculateItemDiscounts(): float
+    {
+        return $this->items->sum('item_discount');
     }
 
     /**
@@ -58,7 +64,8 @@ class Sale extends Model
     public function calculateTotal(): float
     {
         $subtotal = $this->calculateSubtotal();
-        return $subtotal - $this->discount_amount;
+        $itemDiscounts = $this->calculateItemDiscounts();
+        return $subtotal - $itemDiscounts - $this->discount_amount;
     }
 
     /**
