@@ -47,3 +47,13 @@ Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
 Route::post('/sales/complete', [SaleController::class, 'complete'])->name('sales.complete');
 Route::get('/sales/{id}/receipt', [SaleController::class, 'receipt'])->name('sales.receipt');
 Route::get('/sales/export', [SaleController::class, 'export'])->name('sales.export');
+
+// Rutas de finanzas
+Route::get('/finances', [\App\Http\Controllers\FinanceController::class, 'index'])->name('finances.index');
+Route::get('/finances/expenses', [\App\Http\Controllers\FinanceController::class, 'expenses'])->name('finances.expenses');
+Route::get('/finances/expenses/create', [\App\Http\Controllers\FinanceController::class, 'createExpense'])->name('finances.expenses.create');
+Route::post('/finances/expenses', [\App\Http\Controllers\FinanceController::class, 'storeExpense'])->name('finances.expenses.store');
+Route::get('/finances/expenses/{id}/edit', [\App\Http\Controllers\FinanceController::class, 'editExpense'])->name('finances.expenses.edit');
+Route::put('/finances/expenses/{id}', [\App\Http\Controllers\FinanceController::class, 'updateExpense'])->name('finances.expenses.update');
+Route::delete('/finances/expenses/{id}', [\App\Http\Controllers\FinanceController::class, 'destroyExpense'])->name('finances.expenses.destroy');
+Route::get('/finances/export-report', [\App\Http\Controllers\FinanceController::class, 'exportReport'])->name('finances.export');
