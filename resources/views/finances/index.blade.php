@@ -96,7 +96,7 @@
             <div class="bg-gradient-to-br from-{{ $result >= 0 ? 'purple' : 'orange' }}-500 to-{{ $result >= 0 ? 'purple' : 'orange' }}-600 rounded-lg shadow-lg p-6 text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-white text-opacity-90 text-sm">Resultado</p>
+                        <p class="text-white text-opacity-90 text-sm">Ganancias</p>
                         <h3 class="text-3xl font-bold mt-1">${{ number_format($result, 2) }}</h3>
                     </div>
                     <div class="bg-white bg-opacity-30 rounded-full p-3">
