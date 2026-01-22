@@ -77,6 +77,7 @@
                             <th class="px-4 py-3 text-left">Fecha y Hora</th>
                             <th class="px-4 py-3 text-center">Items</th>
                             <th class="px-4 py-3 text-center">Productos</th>
+                            <th class="px-4 py-3 text-center">Método Pago</th>
                             <th class="px-4 py-3 text-right">Total</th>
                             <th class="px-4 py-3 text-center">Acciones</th>
                         </tr>
@@ -101,6 +102,24 @@
                                         {{ $sale->items->sum('quantity') }}
                                     </span>
                                 </td>
+                                <td class="px-4 py-3 text-center">
+                                    @php
+                                        $paymentIcons = [
+                                            'efectivo' => '💵',
+                                            'debito' => '💳',
+                                            'transferencia' => '🏦'
+                                        ];
+                                        $paymentColors = [
+                                            'efectivo' => 'bg-green-100 text-green-800',
+                                            'debito' => 'bg-blue-100 text-blue-800',
+                                            'transferencia' => 'bg-purple-100 text-purple-800'
+                                        ];
+                                        $paymentMethod = $sale->payment_method ?? 'efectivo';
+                                    @endphp
+                                    <span class="px-3 py-1 rounded-full text-sm font-semibold {{ $paymentColors[$paymentMethod] }}">
+                                        {{ $paymentIcons[$paymentMethod] }} {{ ucfirst($paymentMethod) }}
+                                    </span>
+                                </td>
                                 <td class="px-4 py-3 text-right font-bold text-green-600 text-lg">
                                     ${{ number_format($sale->total, 2) }}
                                 </td>
@@ -114,7 +133,7 @@
                     </tbody>
                     <tfoot class="bg-gray-100 font-bold">
                         <tr>
-                            <td colspan="4" class="px-4 py-3 text-right">TOTAL VENTAS:</td>
+                            <td colspan="5" class="px-4 py-3 text-right">TOTAL VENTAS:</td>
                             <td class="px-4 py-3 text-right text-green-600 text-xl">
                                 ${{ number_format($sales->sum('total'), 2) }}
                             </td>

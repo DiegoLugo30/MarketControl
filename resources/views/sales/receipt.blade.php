@@ -13,6 +13,24 @@
             <p class="text-gray-600">POS Barcode System</p>
             <p class="text-sm text-gray-500">{{ $sale->created_at->format('d/m/Y H:i:s') }}</p>
             <p class="text-sm text-gray-500 font-mono">Venta #{{ $sale->id }}</p>
+            @php
+                $paymentIcons = [
+                    'efectivo' => '💵',
+                    'debito' => '💳',
+                    'transferencia' => '🏦'
+                ];
+                $paymentColors = [
+                    'efectivo' => 'bg-green-100 text-green-800',
+                    'debito' => 'bg-blue-100 text-blue-800',
+                    'transferencia' => 'bg-purple-100 text-purple-800'
+                ];
+                $paymentMethod = $sale->payment_method ?? 'efectivo';
+            @endphp
+            <p class="mt-2">
+                <span class="px-4 py-2 rounded-full text-sm font-semibold {{ $paymentColors[$paymentMethod] }}">
+                    {{ $paymentIcons[$paymentMethod] }} Método de pago: {{ ucfirst($paymentMethod) }}
+                </span>
+            </p>
         </div>
 
         <!-- Detalles de la venta -->
@@ -99,9 +117,16 @@
                 <span class="font-semibold">${{ number_format($sale->calculateSubtotal(), 2) }}</span>
             </div>
 
+            @if($sale->calculateItemDiscounts() > 0)
+                <div class="flex justify-between items-center mb-2 text-red-600">
+                    <span>Descuentos en Items:</span>
+                    <span class="font-semibold">-${{ number_format($sale->calculateItemDiscounts(), 2) }}</span>
+                </div>
+            @endif
+
             @if($sale->discount_amount > 0)
                 <div class="flex justify-between items-center mb-2 text-red-600">
-                    <span>Descuento Total:</span>
+                    <span>Descuento General:</span>
                     <span class="font-semibold">-${{ number_format($sale->discount_amount, 2) }}</span>
                 </div>
                 @if($sale->discount_description)

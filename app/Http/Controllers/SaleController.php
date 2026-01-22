@@ -34,6 +34,7 @@ class SaleController extends Controller
             'total' => 'required|numeric|min:0',
             'discount_amount' => 'nullable|numeric|min:0',
             'discount_description' => 'nullable|string|max:255',
+            'payment_method' => 'required|in:efectivo,debito,transferencia',
         ]);
 
         try {
@@ -61,6 +62,7 @@ class SaleController extends Controller
                 'total' => $validated['total'],
                 'discount_amount' => $validated['discount_amount'] ?? 0,
                 'discount_description' => $validated['discount_description'] ?? null,
+                'payment_method' => $validated['payment_method'],
                 'created_at' => now(),
             ]);
 
@@ -213,10 +215,10 @@ class SaleController extends Controller
 
             // Encabezado del reporte
             echo '<table>';
-            echo '<tr><td colspan="7" class="header">📊 REPORTE DE VENTAS</td></tr>';
-            echo '<tr><td class="info-label">Generado el:</td><td colspan="6" class="info-value">' . date('d/m/Y H:i:s') . '</td></tr>';
-            echo '<tr><td class="info-label">Total de ventas:</td><td colspan="6" class="info-value">' . count($sales) . '</td></tr>';
-            echo '<tr><td class="info-label">Total general:</td><td colspan="6" class="info-value money">$' . number_format($sales->sum('total'), 2) . '</td></tr>';
+            echo '<tr><td colspan="8" class="header">📊 REPORTE DE VENTAS</td></tr>';
+            echo '<tr><td class="info-label">Generado el:</td><td colspan="7" class="info-value">' . date('d/m/Y H:i:s') . '</td></tr>';
+            echo '<tr><td class="info-label">Total de ventas:</td><td colspan="7" class="info-value">' . count($sales) . '</td></tr>';
+            echo '<tr><td class="info-label">Total general:</td><td colspan="7" class="info-value money">$' . number_format($sales->sum('total'), 2) . '</td></tr>';
             echo '</table>';
 
             // Tabla principal de ventas
@@ -228,6 +230,7 @@ class SaleController extends Controller
             echo '<th class="table-header">Fecha</th>';
             echo '<th class="table-header">Hora</th>';
             echo '<th class="table-header">Cantidad Items</th>';
+            echo '<th class="table-header">Método Pago</th>';
             echo '<th class="table-header">Subtotal</th>';
             echo '<th class="table-header">Descuento</th>';
             echo '<th class="table-header">Total</th>';
@@ -235,12 +238,22 @@ class SaleController extends Controller
             echo '</thead>';
             echo '<tbody>';
 
+            $paymentIcons = [
+                'efectivo' => '💵',
+                'debito' => '💳',
+                'transferencia' => '🏦'
+            ];
+
             foreach ($sales as $sale) {
+                $paymentMethod = $sale->payment_method ?? 'efectivo';
+                $paymentIcon = $paymentIcons[$paymentMethod] ?? '💵';
+
                 echo '<tr class="data-row">';
                 echo '<td class="center">' . $sale->id . '</td>';
                 echo '<td>' . $sale->created_at->format('d/m/Y') . '</td>';
                 echo '<td class="center">' . $sale->created_at->format('H:i:s') . '</td>';
                 echo '<td class="center">' . $sale->items->count() . '</td>';
+                echo '<td class="center">' . $paymentIcon . ' ' . ucfirst($paymentMethod) . '</td>';
                 echo '<td class="number">$' . number_format($sale->calculateSubtotal(), 2) . '</td>';
                 echo '<td class="number">$' . number_format($sale->discount_amount, 2) . '</td>';
                 echo '<td class="number money">$' . number_format($sale->total, 2) . '</td>';
