@@ -131,7 +131,7 @@
             <div class="text-center py-12 text-gray-500">
                 <i class="fas fa-receipt text-6xl mb-4 opacity-50"></i>
                 <p class="text-xl">No hay ventas registradas</p>
-                <a href="{{ env('APP_URL') }}/home" class="mt-4 inline-block bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+                <a href="{{ env('APP_URL') }}" class="mt-4 inline-block bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
                     Realizar primera venta
                 </a>
             </div>
