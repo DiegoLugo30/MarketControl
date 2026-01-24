@@ -420,9 +420,13 @@ $(document).ready(function() {
 
     // Mostrar producto local
     function showLocalProduct(product) {
+        const price = product.is_weighted
+            ? product.price_per_kg
+            : product.price;
+
         $('#found-barcode').text(product.barcode);
         $('#found-name').text(product.name);
-        $('#found-price').text('$' + parseFloat(product.price).toFixed(2));
+        $('#found-price').text('$' + parseFloat(price).toFixed(2));
         $('#found-stock').text(product.stock + ' unidades');
         $('#found-description').text(product.description || 'Sin descripción');
         $('#btn-edit').attr('href', '/products/' + product.id + '/edit');
