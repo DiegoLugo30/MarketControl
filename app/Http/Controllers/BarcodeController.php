@@ -43,12 +43,15 @@ class BarcodeController extends Controller
         }
 
         try {
+            // Normalizar código a mayúsculas para búsqueda case-insensitive
+            $normalizedCode = strtoupper($code);
+
             // Buscar en base de datos local - primero por barcode
-            $product = Product::where('barcode', $code)->first();
+            $product = Product::whereRaw('UPPER(barcode) = ?', [$normalizedCode])->first();
 
             // Si no se encuentra por barcode, buscar por internal_code
             if (!$product) {
-                $product = Product::where('internal_code', $code)->first();
+                $product = Product::whereRaw('UPPER(internal_code) = ?', [$normalizedCode])->first();
             }
 
             if ($product) {
