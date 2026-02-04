@@ -211,8 +211,106 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
+    // ========================================
+    // PERSISTENCIA DEL CARRITO - localStorage
+    // ========================================
+    const CART_STORAGE_KEY = 'pos_cart_data';
+    const DISCOUNT_STORAGE_KEY = 'pos_discount_data';
+    const PAYMENT_METHOD_STORAGE_KEY = 'pos_payment_method';
+
+    /**
+     * Guardar carrito en localStorage
+     * Se llama cada vez que se modifica el carrito
+     */
+    function saveCartToStorage() {
+        try {
+            localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+            console.log('✅ [PERSISTENCIA] Carrito guardado:', cart.length, 'items');
+        } catch (error) {
+            console.error('❌ [PERSISTENCIA] Error al guardar carrito:', error);
+        }
+    }
+
+    /**
+     * Guardar descuento total en localStorage
+     */
+    function saveDiscountToStorage() {
+        try {
+            const discount = $('#total-discount-input').val() || '0';
+            localStorage.setItem(DISCOUNT_STORAGE_KEY, discount);
+        } catch (error) {
+            console.error('❌ [PERSISTENCIA] Error al guardar descuento:', error);
+        }
+    }
+
+    /**
+     * Guardar método de pago en localStorage
+     */
+    function savePaymentMethodToStorage() {
+        try {
+            const paymentMethod = $('#payment-method').val() || 'efectivo';
+            localStorage.setItem(PAYMENT_METHOD_STORAGE_KEY, paymentMethod);
+        } catch (error) {
+            console.error('❌ [PERSISTENCIA] Error al guardar método de pago:', error);
+        }
+    }
+
+    /**
+     * Cargar carrito desde localStorage
+     * Se llama al iniciar la página
+     */
+    function loadCartFromStorage() {
+        try {
+            const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+            if (savedCart) {
+                cart = JSON.parse(savedCart);
+                console.log('✅ [PERSISTENCIA] Carrito restaurado:', cart.length, 'items');
+
+                // Restaurar descuento total si existe
+                const savedDiscount = localStorage.getItem(DISCOUNT_STORAGE_KEY);
+                if (savedDiscount) {
+                    $('#total-discount-input').val(savedDiscount);
+                }
+
+                // Restaurar método de pago si existe
+                const savedPaymentMethod = localStorage.getItem(PAYMENT_METHOD_STORAGE_KEY);
+                if (savedPaymentMethod) {
+                    $('#payment-method').val(savedPaymentMethod);
+                }
+
+                renderCart();
+            } else {
+                console.log('ℹ️ [PERSISTENCIA] No hay carrito guardado');
+            }
+        } catch (error) {
+            console.error('❌ [PERSISTENCIA] Error al cargar carrito:', error);
+            cart = [];
+        }
+    }
+
+    /**
+     * Limpiar carrito del localStorage
+     * Se llama al completar venta o limpiar manualmente
+     */
+    function clearCartStorage() {
+        try {
+            localStorage.removeItem(CART_STORAGE_KEY);
+            localStorage.removeItem(DISCOUNT_STORAGE_KEY);
+            localStorage.removeItem(PAYMENT_METHOD_STORAGE_KEY);
+            console.log('✅ [PERSISTENCIA] Carrito limpiado del storage');
+        } catch (error) {
+            console.error('❌ [PERSISTENCIA] Error al limpiar storage:', error);
+        }
+    }
+
+    // ========================================
+    // INICIALIZACIÓN
+    // ========================================
     let cart = [];
     let pendingWeightedProduct = null; // Producto esperando peso
+
+    // Cargar carrito guardado al iniciar
+    loadCartFromStorage();
 
     // Auto-focus en el input de código de barras
     function focusBarcodeInput() {
@@ -447,6 +545,7 @@ $(document).ready(function() {
             });
         }
 
+        saveCartToStorage(); // Persistir cambios
         renderCart();
         focusBarcodeInput();
     }
@@ -465,6 +564,7 @@ $(document).ready(function() {
             item_discount: 0
         });
 
+        saveCartToStorage(); // Persistir cambios
         renderCart();
         focusBarcodeInput();
     }
@@ -569,6 +669,7 @@ $(document).ready(function() {
             }
 
             cart[index].item_discount = discountPercent;
+            saveCartToStorage(); // Persistir cambios de descuento
 
             // Actualizar solo el total del item específico sin re-renderizar todo
             const item = cart[index];
@@ -589,6 +690,7 @@ $(document).ready(function() {
         const item = cart[index];
         if (!item.is_weighted && item.quantity < item.stock) {
             item.quantity++;
+            saveCartToStorage(); // Persistir cambios
             renderCart();
         } else if (!item.is_weighted) {
             alert('No hay más stock disponible');
@@ -600,6 +702,7 @@ $(document).ready(function() {
         const item = cart[index];
         if (item.quantity > 1) {
             item.quantity--;
+            saveCartToStorage(); // Persistir cambios
             renderCart();
         } else {
             removeFromCart(index);
@@ -609,6 +712,7 @@ $(document).ready(function() {
     // Eliminar del carrito
     window.removeFromCart = function(index) {
         cart.splice(index, 1);
+        saveCartToStorage(); // Persistir cambios
         renderCart();
     };
 
@@ -642,6 +746,7 @@ $(document).ready(function() {
 
     // Event listener para descuento total
     $('#total-discount-input').on('input', function() {
+        saveDiscountToStorage(); // Persistir descuento total
         updateTotals();
     });
 
@@ -650,6 +755,8 @@ $(document).ready(function() {
         if (cart.length > 0 && confirm('¿Estás seguro de limpiar el carrito?')) {
             cart = [];
             $('#total-discount-input').val(0);
+            $('#payment-method').val('efectivo'); // Resetear método de pago
+            clearCartStorage(); // Limpiar storage al vaciar carrito manualmente
             renderCart();
             focusBarcodeInput();
         }
@@ -697,6 +804,7 @@ $(document).ready(function() {
         $.post(url, saleData)
             .done(function(response) {
                 if (response.success) {
+                    clearCartStorage(); // Limpiar storage al completar venta exitosamente
                     $('#btn-view-receipt').attr('href', '/sales/' + response.sale_id + '/receipt');
                     $('#sale-modal').removeClass('hidden');
                 } else {
@@ -713,6 +821,9 @@ $(document).ready(function() {
     $('#btn-new-sale').click(function() {
         $('#sale-modal').addClass('hidden');
         cart = [];
+        $('#total-discount-input').val(0);
+        $('#payment-method').val('efectivo'); // Resetear método de pago
+        clearCartStorage(); // Limpiar storage al iniciar nueva venta
         renderCart();
         focusBarcodeInput();
     });
@@ -775,6 +886,7 @@ $(document).ready(function() {
     });
 
     $('#payment-method').on('blur change', function() {
+        savePaymentMethodToStorage(); // Persistir método de pago al cambiar
         setTimeout(function() {
             isUsingPaymentMethod = false;
         }, 200);
