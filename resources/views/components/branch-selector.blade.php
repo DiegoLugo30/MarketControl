@@ -76,7 +76,7 @@
         <!-- Opción de gestión -->
         <div class="py-1">
             <a
-                href="{{ route('branches.index') }}"
+                href="{{ env('APP_URL') }}/branche"
                 class="w-full text-left px-4 py-2 hover:bg-gray-100 transition flex items-center space-x-3 text-gray-700 hover:text-gray-900"
             >
                 <i class="fas fa-cog"></i>

@@ -94,12 +94,23 @@ class ProductController extends Controller
 
         // Crear stock en la sucursal activa (solo para productos no pesables)
         if (!$isWeighted) {
-            $branchId = session('active_branch_id') ?? \App\Models\Branch::main()->id;
-            \App\Models\ProductStock::create([
-                'product_id' => $product->id,
-                'branch_id' => $branchId,
-                'stock' => $stock,
-            ]);
+            $branchId = session('active_branch_id');
+            if (!$branchId) {
+                $mainBranch = \App\Models\Branch::main();
+                $branchId = $mainBranch ? $mainBranch->id : null;
+            }
+
+            if ($branchId) {
+                \App\Models\ProductStock::create([
+                    'product_id' => $product->id,
+                    'branch_id' => $branchId,
+                    'stock' => $stock,
+                ]);
+            } else {
+                \Log::warning('⚠️ Producto creado sin stock - no hay sucursal configurada', [
+                    'product_id' => $product->id,
+                ]);
+            }
         }
 
         return redirect()->back()->with('success', 'Producto creado correctamente.');
@@ -176,17 +187,27 @@ class ProductController extends Controller
 
         // Actualizar stock en la sucursal activa (solo para productos no pesables)
         if (!$isWeighted) {
-            $branchId = session('active_branch_id') ?? \App\Models\Branch::main()->id;
+            $branchId = session('active_branch_id');
+            if (!$branchId) {
+                $mainBranch = \App\Models\Branch::main();
+                $branchId = $mainBranch ? $mainBranch->id : null;
+            }
 
-            \App\Models\ProductStock::updateOrCreate(
-                [
+            if ($branchId) {
+                \App\Models\ProductStock::updateOrCreate(
+                    [
+                        'product_id' => $product->id,
+                        'branch_id' => $branchId,
+                    ],
+                    [
+                        'stock' => $stock,
+                    ]
+                );
+            } else {
+                \Log::warning('⚠️ Stock no actualizado - no hay sucursal configurada', [
                     'product_id' => $product->id,
-                    'branch_id' => $branchId,
-                ],
-                [
-                    'stock' => $stock,
-                ]
-            );
+                ]);
+            }
         }
 
         return redirect()
@@ -225,6 +246,28 @@ class ProductController extends Controller
         $product = Product::where('barcode', $barcode)->first();
 
         if ($product) {
+            // Obtener branch ID de forma segura
+            $branchId = session('active_branch_id');
+            if (!$branchId) {
+                $mainBranch = \App\Models\Branch::main();
+                $branchId = $mainBranch ? $mainBranch->id : null;
+            }
+
+            // Obtener stock de forma segura (0 si no hay branch configurado)
+            $stock = 0;
+            if ($branchId) {
+                try {
+                    $stock = $product->getStockInBranch($branchId);
+                } catch (\Exception $e) {
+                    \Log::warning('⚠️ Error al obtener stock en searchByBarcode', [
+                        'product_id' => $product->id,
+                        'branch_id' => $branchId,
+                        'error' => $e->getMessage(),
+                    ]);
+                    $stock = 0;
+                }
+            }
+
             return response()->json([
                 'found' => true,
                 'product' => [
@@ -233,7 +276,7 @@ class ProductController extends Controller
                     'name' => $product->name,
                     'description' => $product->description,
                     'price' => $product->price,
-                    'stock' => $product->getStockInBranch(session('active_branch_id') ?? \App\Models\Branch::main()->id),
+                    'stock' => $stock,
                 ],
             ]);
         }

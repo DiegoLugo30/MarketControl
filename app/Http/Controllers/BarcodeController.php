@@ -61,6 +61,32 @@ class BarcodeController extends Controller
                     'name' => $product->name,
                 ]);
 
+                // Obtener branch ID de forma segura
+                $branchId = session('active_branch_id');
+                if (!$branchId) {
+                    $mainBranch = \App\Models\Branch::main();
+                    $branchId = $mainBranch ? $mainBranch->id : null;
+                }
+
+                // Obtener stock de forma segura (0 si no hay branch configurado)
+                $stock = 0;
+                if ($branchId) {
+                    try {
+                        $stock = $product->getStockInBranch($branchId);
+                    } catch (\Exception $e) {
+                        \Log::warning('⚠️ Error al obtener stock', [
+                            'product_id' => $product->id,
+                            'branch_id' => $branchId,
+                            'error' => $e->getMessage(),
+                        ]);
+                        $stock = 0;
+                    }
+                } else {
+                    \Log::warning('⚠️ No hay sucursal configurada', [
+                        'product_id' => $product->id,
+                    ]);
+                }
+
                 return response()->json([
                     'success' => true,
                     'found_locally' => true,
@@ -72,7 +98,7 @@ class BarcodeController extends Controller
                         'description' => $product->description,
                         'price' => $product->price,
                         'price_per_kg' => $product->price_per_kg,
-                        'stock' => $product->getStockInBranch(session('active_branch_id') ?? \App\Models\Branch::main()->id),
+                        'stock' => $stock,
                         'is_weighted' => $product->is_weighted,
                         'requires_weight' => $product->requiresWeight(),
                     ],

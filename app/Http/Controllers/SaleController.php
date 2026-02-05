@@ -41,7 +41,21 @@ class SaleController extends Controller
             DB::beginTransaction();
 
             // Verificar stock de productos no pesables
-            $branchId = session('active_branch_id') ?? \App\Models\Branch::main()->id;
+            // Obtener branch ID de forma segura
+            $branchId = session('active_branch_id');
+            if (!$branchId) {
+                $mainBranch = \App\Models\Branch::main();
+                $branchId = $mainBranch ? $mainBranch->id : null;
+            }
+
+            // Si no hay branch configurado, no se puede completar la venta
+            if (!$branchId) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error: No hay sucursal configurada en el sistema. Por favor contacte al administrador.',
+                ], 500);
+            }
 
             foreach ($validated['items'] as $item) {
                 $product = Product::findOrFail($item['product_id']);
