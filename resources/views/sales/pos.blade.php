@@ -308,6 +308,7 @@ $(document).ready(function() {
     // ========================================
     let cart = [];
     let pendingWeightedProduct = null; // Producto esperando peso
+    let editingCartIndex = null; // Índice del item del carrito siendo editado
 
     // Cargar carrito guardado al iniciar
     loadCartFromStorage();
@@ -400,15 +401,31 @@ $(document).ready(function() {
     }
 
     // Mostrar modal de peso
-    function showWeightModal(product) {
+    function showWeightModal(product, cartIndex = null) {
         pendingWeightedProduct = product;
+        editingCartIndex = cartIndex;
+
         $('#weight-product-name').text(product.name);
         $('#weight-product-price').text('$' + parseFloat(product.price_per_kg).toFixed(2) + ' por kg');
-        $('#weight-input').val('');
-        $('#weight-unit').val('g'); // Resetear a gramos
+
+        // Si estamos editando, prellenar con el peso actual
+        if (cartIndex !== null && cart[cartIndex]) {
+            const currentWeight = cart[cartIndex].weight;
+            // Convertir kg a gramos para mostrar
+            $('#weight-input').val((currentWeight * 1000).toFixed(0));
+            $('#weight-unit').val('g');
+            $('#btn-add-weighted').text('Actualizar').html('<i class="fas fa-check"></i> Actualizar');
+            calculateWeightPrice();
+        } else {
+            // Modo agregar nuevo
+            $('#weight-input').val('');
+            $('#weight-unit').val('g'); // Resetear a gramos
+            $('#calculated-price').text('$0.00');
+            $('#btn-add-weighted').prop('disabled', true);
+            $('#btn-add-weighted').text('Agregar').html('<i class="fas fa-check"></i> Agregar');
+        }
+
         $('#weight-input').attr('step', '1').attr('min', '1').attr('placeholder', '0'); // Ajustar para gramos
-        $('#calculated-price').text('$0.00');
-        $('#btn-add-weighted').prop('disabled', true);
         $('#weight-modal').removeClass('hidden');
         $('#weight-input').focus();
     }
@@ -417,6 +434,7 @@ $(document).ready(function() {
     function closeWeightModal() {
         $('#weight-modal').addClass('hidden');
         pendingWeightedProduct = null;
+        editingCartIndex = null;
         focusBarcodeInput();
     }
 
@@ -478,7 +496,7 @@ $(document).ready(function() {
         $('#btn-add-weighted').prop('disabled', false);
     }
 
-    // Agregar producto pesable
+    // Agregar/Actualizar producto pesable
     $('#btn-add-weighted').on('click', function() {
         if (!pendingWeightedProduct) return;
 
@@ -498,8 +516,18 @@ $(document).ready(function() {
         const pricePerKg = parseFloat(pendingWeightedProduct.price_per_kg);
         const totalPrice = weight * pricePerKg;
 
-        // Agregar al carrito con peso
-        addWeightedToCart(pendingWeightedProduct, weight, totalPrice);
+        if (editingCartIndex !== null) {
+            // Modo edición - actualizar item existente
+            cart[editingCartIndex].weight = weight;
+            cart[editingCartIndex].price = totalPrice;
+            saveCartToStorage();
+            renderCart();
+            showAlert('Peso actualizado correctamente', 'success');
+        } else {
+            // Modo agregar - agregar nuevo item
+            addWeightedToCart(pendingWeightedProduct, weight, totalPrice);
+        }
+
         closeWeightModal();
     });
 
@@ -616,6 +644,9 @@ $(document).ready(function() {
                                     </button>
                                 ` : `
                                     <span class="font-semibold text-lg px-3">${quantityText}</span>
+                                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm ml-2" onclick="editWeight(${index})" title="Editar peso">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
                                 `}
                             </div>
                             <div class="text-right">
@@ -716,6 +747,21 @@ $(document).ready(function() {
         renderCart();
     };
 
+    // Editar peso de producto pesable
+    window.editWeight = function(index) {
+        const item = cart[index];
+        if (!item.is_weighted) return;
+
+        // Crear objeto de producto con los datos necesarios para el modal
+        const product = {
+            id: item.product_id,
+            name: item.name,
+            price_per_kg: item.price / item.weight // Calcular precio por kg desde el total
+        };
+
+        showWeightModal(product, index);
+    };
+
     // Actualizar totales
     function updateTotals() {
         const totalItems = cart.length;
@@ -748,6 +794,11 @@ $(document).ready(function() {
     $('#total-discount-input').on('input', function() {
         saveDiscountToStorage(); // Persistir descuento total
         updateTotals();
+    });
+
+    // Event listener para método de pago
+    $('#payment-method').on('change', function() {
+        savePaymentMethodToStorage(); // Persistir método de pago
     });
 
     // Limpiar carrito

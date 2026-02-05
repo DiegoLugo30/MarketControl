@@ -142,12 +142,12 @@
 
                     <div>
                         <label class="block text-gray-700 font-semibold mb-2">
-                            Stock *
+                            Stock en {{ $activeBranch ? $activeBranch->name : 'Sucursal' }} *
                         </label>
                         <input
                             type="number"
                             name="stock"
-                            value="{{ old('stock', $product->stock) }}"
+                            value="{{ old('stock', $activeBranch ? $product->getStockInBranch($activeBranch->id) : 0) }}"
                             min="0"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('stock') border-red-500 @enderror"
                             id="stock-unit"
@@ -155,6 +155,9 @@
                         @error('stock')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                         @enderror
+                        <p class="text-sm text-gray-600 mt-1">
+                            <i class="fas fa-info-circle"></i> Este stock es específico para la sucursal activa
+                        </p>
                     </div>
                 </div>
             </div>

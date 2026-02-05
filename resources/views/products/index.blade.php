@@ -95,10 +95,13 @@
                                 </td>
                                 <td class="px-4 py-3 text-right">
                                     @if($product->is_weighted)
-                                        <span class="text-gray-400 text-sm">N/A</span>
+                                        <span class="text-gray-400 text-sm">N/A (Pesable)</span>
                                     @else
-                                        <span class="px-2 py-1 rounded text-sm {{ $product->stock > 10 ? 'bg-green-100 text-green-800' : ($product->stock > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') }}">
-                                            {{ $product->stock }}
+                                        @php
+                                            $branchStock = $product->getStockInBranch($activeBranch->id);
+                                        @endphp
+                                        <span class="px-2 py-1 rounded text-sm {{ $branchStock > 10 ? 'bg-green-100 text-green-800' : ($branchStock > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') }}">
+                                            {{ $branchStock }}
                                         </span>
                                     @endif
                                 </td>

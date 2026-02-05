@@ -24,5 +24,8 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment('production') || str_starts_with(config('app.url'), 'https')) {
             URL::forceScheme('https');
         }
+
+        // Cargar helpers globales
+        require_once app_path('Helpers/BranchHelper.php');
     }
 }

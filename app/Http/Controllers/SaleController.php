@@ -41,17 +41,21 @@ class SaleController extends Controller
             DB::beginTransaction();
 
             // Verificar stock de productos no pesables
+            $branchId = session('active_branch_id') ?? \App\Models\Branch::main()->id;
+
             foreach ($validated['items'] as $item) {
                 $product = Product::findOrFail($item['product_id']);
 
                 // Solo verificar stock para productos no pesables
                 if (!$product->is_weighted) {
                     $quantity = $item['quantity'] ?? 1;
-                    if (!$product->hasStock($quantity)) {
+                    $availableStock = $product->getStockInBranch($branchId);
+
+                    if (!$product->hasStockInBranch($branchId, $quantity)) {
                         DB::rollBack();
                         return response()->json([
                             'success' => false,
-                            'message' => "Stock insuficiente para {$product->name}. Disponible: {$product->stock}",
+                            'message' => "Stock insuficiente para {$product->name}. Disponible: {$availableStock}",
                         ], 422);
                     }
                 }
@@ -87,8 +91,8 @@ class SaleController extends Controller
                     $saleItemData['quantity'] = $item['quantity'] ?? 1;
                     $saleItemData['weight'] = null;
 
-                    // Decrementar stock solo para productos no pesables
-                    $product->decrementStock($saleItemData['quantity']);
+                    // Decrementar stock solo para productos no pesables en la sucursal activa
+                    $product->decrementStockInBranch($branchId, $saleItemData['quantity']);
                 }
 
                 SaleItem::create($saleItemData);

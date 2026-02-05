@@ -72,7 +72,7 @@ class BarcodeController extends Controller
                         'description' => $product->description,
                         'price' => $product->price,
                         'price_per_kg' => $product->price_per_kg,
-                        'stock' => $product->stock,
+                        'stock' => $product->getStockInBranch(session('active_branch_id') ?? \App\Models\Branch::main()->id),
                         'is_weighted' => $product->is_weighted,
                         'requires_weight' => $product->requiresWeight(),
                     ],

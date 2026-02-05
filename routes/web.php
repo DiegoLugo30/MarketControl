@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BarcodeController;
+use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SaleController;
 use Illuminate\Support\Facades\Route;
@@ -57,3 +58,7 @@ Route::get('/finances/expenses/{id}/edit', [\App\Http\Controllers\FinanceControl
 Route::put('/finances/expenses/{id}', [\App\Http\Controllers\FinanceController::class, 'updateExpense'])->name('finances.expenses.update');
 Route::delete('/finances/expenses/{id}', [\App\Http\Controllers\FinanceController::class, 'destroyExpense'])->name('finances.expenses.destroy');
 Route::get('/finances/export-report', [\App\Http\Controllers\FinanceController::class, 'exportReport'])->name('finances.export');
+
+// Rutas de sucursales (branches)
+Route::resource('branches', BranchController::class);
+Route::post('/branches/set-active', [BranchController::class, 'setActive'])->name('branches.set-active');

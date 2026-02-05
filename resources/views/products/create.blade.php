@@ -138,7 +138,7 @@
 
                     <div>
                         <label class="block text-gray-700 font-semibold mb-2">
-                            Stock Inicial *
+                            Stock Inicial en {{ $activeBranch ? $activeBranch->name : 'Sucursal' }} *
                         </label>
                         <input
                             type="number"
@@ -151,6 +151,9 @@
                         @error('stock')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                         @enderror
+                        <p class="text-sm text-gray-600 mt-1">
+                            <i class="fas fa-info-circle"></i> El stock se registrará para la sucursal activa
+                        </p>
                     </div>
                 </div>
             </div>

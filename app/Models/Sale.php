@@ -4,12 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\BelongsToBranch;
 
 class Sale extends Model
 {
+    use BelongsToBranch;
+
     public $timestamps = false;
 
     protected $fillable = [
+        'branch_id',
         'total',
         'created_at',
         'discount_amount',
