@@ -76,15 +76,31 @@ class ProductController extends Controller
 
         $validated = $request->validate($rules, $messages);
 
+        // Guardar stock aparte (para product_stocks)
+        $stock = $validated['stock'] ?? 0;
+
+        // Remover stock del array validated (se maneja en product_stocks)
+        unset($validated['stock']);
+
         // Establecer valores por defecto según tipo
         if ($isWeighted) {
-            $validated['stock'] = 0;
             $validated['price'] = 0;
         } else {
             $validated['price_per_kg'] = null;
         }
 
+        // Crear producto
         $product = Product::create($validated);
+
+        // Crear stock en la sucursal activa (solo para productos no pesables)
+        if (!$isWeighted) {
+            $branchId = session('active_branch_id') ?? \App\Models\Branch::main()->id;
+            \App\Models\ProductStock::create([
+                'product_id' => $product->id,
+                'branch_id' => $branchId,
+                'stock' => $stock,
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Producto creado correctamente.');
     }
@@ -143,15 +159,35 @@ class ProductController extends Controller
 
         $validated = $request->validate($rules, $messages);
 
+        // Guardar stock aparte (para product_stocks)
+        $stock = $validated['stock'] ?? 0;
+
+        // Remover stock del array validated (se maneja en product_stocks)
+        unset($validated['stock']);
+
         // Establecer valores por defecto según tipo
         if ($isWeighted) {
-            $validated['stock'] = 0;
             $validated['price'] = 0;
         } else {
             $validated['price_per_kg'] = null;
         }
 
         $product->update($validated);
+
+        // Actualizar stock en la sucursal activa (solo para productos no pesables)
+        if (!$isWeighted) {
+            $branchId = session('active_branch_id') ?? \App\Models\Branch::main()->id;
+
+            \App\Models\ProductStock::updateOrCreate(
+                [
+                    'product_id' => $product->id,
+                    'branch_id' => $branchId,
+                ],
+                [
+                    'stock' => $stock,
+                ]
+            );
+        }
 
         return redirect()
             ->route('products.edit', $product)
@@ -197,7 +233,7 @@ class ProductController extends Controller
                     'name' => $product->name,
                     'description' => $product->description,
                     'price' => $product->price,
-                    'stock' => $product->stock,
+                    'stock' => $product->getStockInBranch(session('active_branch_id') ?? \App\Models\Branch::main()->id),
                 ],
             ]);
         }

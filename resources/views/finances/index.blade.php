@@ -7,9 +7,24 @@
     <div class="bg-white rounded-lg shadow-lg p-6">
         <!-- Header -->
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-800">
-                <i class="fas fa-chart-line"></i> Dashboard Financiero
-            </h1>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">
+                    <i class="fas fa-chart-line"></i> Dashboard Financiero
+                </h1>
+                @if($showingAllBranches)
+                    <p class="text-sm text-blue-600 mt-1">
+                        <i class="fas fa-globe"></i> Mostrando datos consolidados de todas las sucursales
+                    </p>
+                @elseif($viewingBranch && $activeBranch && $viewingBranch->id !== $activeBranch->id)
+                    <p class="text-sm text-orange-600 mt-1">
+                        <i class="fas fa-building"></i> Visualizando: {{ $viewingBranch->name }}
+                    </p>
+                @else
+                    <p class="text-sm text-gray-600 mt-1">
+                        <i class="fas fa-building"></i> Sucursal: {{ $activeBranch ? $activeBranch->name : 'N/A' }}
+                    </p>
+                @endif
+            </div>
             <div class="flex gap-3">
                 <a href="{{ env('APP_URL') }}/finances/expenses" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">
                     <i class="fas fa-money-bill-wave"></i> Gestionar Gastos
@@ -20,7 +35,7 @@
             </div>
         </div>
 
-        <!-- Filtro de Mes/Año -->
+        <!-- Filtro de Mes/Año/Sucursal -->
         <div class="bg-gray-50 rounded-lg p-4 mb-6">
             <form method="GET" action="{{ env('APP_URL') }}/finances" class="flex gap-4 items-end">
                 <div class="flex-1">
@@ -45,6 +60,29 @@
                         @endfor
                     </select>
                 </div>
+
+                @if($activeBranch && $activeBranch->is_main)
+                    <!-- Filtro de Sucursal (solo visible desde sucursal principal) -->
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-building"></i> Sucursal
+                            <span class="text-xs text-gray-500">(Solo desde Principal)</span>
+                        </label>
+                        <select name="branch_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-blue-50">
+                            <option value="">{{ $activeBranch->name }} (Activa)</option>
+                            <option value="all" {{ $filterBranchId === 'all' ? 'selected' : '' }} class="font-bold">
+                                🌐 Todas las Sucursales (Consolidado)
+                            </option>
+                            <optgroup label="────────────────"></optgroup>
+                            @foreach($allBranches as $branch)
+                                <option value="{{ $branch->id }}" {{ $filterBranchId == $branch->id ? 'selected' : '' }}>
+                                    {{ $branch->name }}{{ $branch->is_main ? ' ⭐' : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
+
                 <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
                     <i class="fas fa-filter"></i> Filtrar
                 </button>
@@ -312,8 +350,15 @@ if (expensesCategoryCtx) {
 function downloadReport() {
     const month = {{ $month }};
     const year = {{ $year }};
+    const branchId = '{{ $filterBranchId ?? '' }}';
+
+    let url = '{{ env('APP_URL') }}/finances/export-report?month=' + month + '&year=' + year;
+    if (branchId) {
+        url += '&branch_id=' + branchId;
+    }
+
     // Abrir en nueva pestaña para que el usuario pueda imprimir/guardar como PDF
-    window.open('{{ env('APP_URL') }}/finances/export-report?month=' + month + '&year=' + year, '_blank');
+    window.open(url, '_blank');
 }
 </script>
 @endsection

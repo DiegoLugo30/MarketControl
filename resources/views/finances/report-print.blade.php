@@ -107,7 +107,7 @@
         <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 shadow-lg">
             <i class="fas fa-print"></i> Imprimir / Guardar PDF
         </button>
-        <a href="{{ env('APP_URL') }}/finances?month={{ $month }}&year={{ $year }}"
+        <a href="{{ env('APP_URL') }}/finances?month={{ $month }}&year={{ $year }}{{ isset($showingAllBranches) && $showingAllBranches ? '&branch_id=all' : (request('branch_id') ? '&branch_id='.request('branch_id') : '') }}"
            class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 shadow-lg">
             <i class="fas fa-arrow-left"></i> Volver
         </a>
@@ -120,6 +120,15 @@
     <div class="bg-blue-900 text-white p-5 rounded-lg mb-4">
         <h1 class="text-3xl font-bold text-center mb-1">📊 REPORTE FINANCIERO</h1>
         <h2 class="text-xl font-semibold text-center mb-1">{{ strtoupper($monthName) }}</h2>
+        @if(isset($branchName))
+            <p class="text-center text-yellow-300 text-base font-semibold">
+                @if($showingAllBranches ?? false)
+                    🌐 Consolidado de Todas las Sucursales
+                @else
+                    🏢 {{ $branchName }}
+                @endif
+            </p>
+        @endif
         <p class="text-center text-blue-200 text-sm">Generado el {{ date('d/m/Y H:i:s') }}</p>
     </div>
 

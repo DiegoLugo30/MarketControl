@@ -62,22 +62,28 @@
                     <i class="fas fa-cash-register"></i> Arima Store
                     </a>
                 </div>
-                <div class="flex space-x-4">
-                    <a href="{{ env('APP_URL') }}/" class="hover:bg-blue-700 px-4 py-2 rounded transition">
+                <div class="flex space-x-4 items-center">
+                    <a href="{{ env('APP_URL') }}/" class="hover:bg-green-700 px-4 py-2 rounded transition">
                     <i class="fas fa-shopping-cart"></i> Punto de Venta
                     </a>
-                    <a href="{{ env('APP_URL') }}/barcode/scan" class="hover:bg-blue-700 px-4 py-2 rounded transition">
+                    <a href="{{ env('APP_URL') }}/barcode/scan" class="hover:bg-green-700 px-4 py-2 rounded transition">
                         <i class="fas fa-barcode"></i> Escanear
                     </a>
-                    <a href="{{ env('APP_URL') }}/products" class="hover:bg-blue-700 px-4 py-2 rounded transition">
+                    <a href="{{ env('APP_URL') }}/products" class="hover:bg-green-700 px-4 py-2 rounded transition">
                     <i class="fas fa-box"></i> Productos
                     </a>
-                    <a href="{{ env('APP_URL') }}/sales" class="hover:bg-blue-700 px-4 py-2 rounded transition">
+                    <a href="{{ env('APP_URL') }}/sales" class="hover:bg-green-700 px-4 py-2 rounded transition">
                     <i class="fas fa-receipt"></i> Ventas
                     </a>
-                    <a href="{{ env('APP_URL') }}/finances" class="hover:bg-blue-700 px-4 py-2 rounded transition">
+                    <a href="{{ env('APP_URL') }}/finances" class="hover:bg-green-700 px-4 py-2 rounded transition">
                     <i class="fas fa-chart-line"></i> Finanzas
                     </a>
+
+                    <!-- Divisor -->
+                    <div class="border-l border-green-500 h-8"></div>
+
+                    <!-- Selector de Sucursal -->
+                    @include('components.branch-selector')
                 </div>
             </div>
         </div>

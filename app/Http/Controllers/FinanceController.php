@@ -20,27 +20,103 @@ class FinanceController extends Controller
         $month = $request->get('month', now()->month);
         $year = $request->get('year', now()->year);
 
-        // Calcular ingresos del mes (suma de ventas)
-        $income = Sale::whereYear('created_at', $year)
-                     ->whereMonth('created_at', $month)
-                     ->sum('total');
+        // Obtener filtro de sucursal (solo disponible desde sucursal principal)
+        $filterBranchId = $request->get('branch_id', null);
 
-        // Calcular gastos del mes
-        $expenses = Expense::forMonth($month, $year)->sum('amount');
+        // Obtener sucursal activa y todas las sucursales
+        $activeBranch = \App\Models\Branch::find(session('active_branch_id'));
+        $allBranches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get();
+
+        // Variable para indicar si se están mostrando todas las sucursales
+        $showingAllBranches = false;
+        $viewingBranch = null;
+
+        // Determinar la consulta según el filtro
+        if ($filterBranchId === 'all') {
+            // Ver todas las sucursales consolidadas
+            $showingAllBranches = true;
+
+            $income = Sale::withoutBranchScope()
+                         ->whereYear('created_at', $year)
+                         ->whereMonth('created_at', $month)
+                         ->sum('total');
+
+            $expenses = Expense::withoutBranchScope()
+                              ->whereYear('created_at', $year)
+                              ->whereMonth('created_at', $month)
+                              ->sum('amount');
+
+            $salesCount = Sale::withoutBranchScope()
+                             ->whereYear('created_at', $year)
+                             ->whereMonth('created_at', $month)
+                             ->count();
+
+            $topProducts = $this->getTopProducts($month, $year, null);
+            $expensesByCategory = Expense::withoutBranchScope()
+                                        ->whereYear('date', $year)
+                                        ->whereMonth('date', $month)
+                                        ->select('category', DB::raw('SUM(amount) as total'))
+                                        ->groupBy('category')
+                                        ->orderBy('total', 'desc')
+                                        ->get();
+
+        } elseif ($filterBranchId && $activeBranch && $activeBranch->is_main) {
+            // Ver sucursal específica (solo desde sucursal principal)
+            $viewingBranch = \App\Models\Branch::find($filterBranchId);
+
+            if ($viewingBranch) {
+                $income = Sale::withoutBranchScope()
+                             ->where('branch_id', $filterBranchId)
+                             ->whereYear('created_at', $year)
+                             ->whereMonth('created_at', $month)
+                             ->sum('total');
+
+                $expenses = Expense::withoutBranchScope()
+                                  ->where('branch_id', $filterBranchId)
+                                  ->whereYear('created_at', $year)
+                                  ->whereMonth('created_at', $month)
+                                  ->sum('amount');
+
+                $salesCount = Sale::withoutBranchScope()
+                                 ->where('branch_id', $filterBranchId)
+                                 ->whereYear('created_at', $year)
+                                 ->whereMonth('created_at', $month)
+                                 ->count();
+
+                $topProducts = $this->getTopProducts($month, $year, $filterBranchId);
+                $expensesByCategory = Expense::withoutBranchScope()
+                                            ->where('branch_id', $filterBranchId)
+                                            ->whereYear('date', $year)
+                                            ->whereMonth('date', $month)
+                                            ->select('category', DB::raw('SUM(amount) as total'))
+                                            ->groupBy('category')
+                                            ->orderBy('total', 'desc')
+                                            ->get();
+            } else {
+                // Sucursal no encontrada, usar datos de sucursal activa
+                return redirect()->route('finances.index', ['month' => $month, 'year' => $year]);
+            }
+
+        } else {
+            // Vista normal - sucursal activa (comportamiento por defecto)
+            $viewingBranch = $activeBranch;
+
+            $income = Sale::whereYear('created_at', $year)
+                         ->whereMonth('created_at', $month)
+                         ->sum('total');
+
+            $expenses = Expense::forMonth($month, $year)->sum('amount');
+
+            $salesCount = Sale::whereYear('created_at', $year)
+                             ->whereMonth('created_at', $month)
+                             ->count();
+
+            $topProducts = $this->getTopProducts($month, $year);
+            $expensesByCategory = Expense::getTotalByCategory($month, $year);
+        }
 
         // Calcular resultado (ingresos - gastos)
         $result = $income - $expenses;
-
-        // Cantidad total de ventas del mes
-        $salesCount = Sale::whereYear('created_at', $year)
-                         ->whereMonth('created_at', $month)
-                         ->count();
-
-        // Top 5 productos más vendidos del mes
-        $topProducts = $this->getTopProducts($month, $year);
-
-        // Gastos por categoría (para gráfico de torta)
-        $expensesByCategory = Expense::getTotalByCategory($month, $year);
 
         // Datos para gráfico de barras (ingresos vs gastos)
         $chartData = [
@@ -57,25 +133,45 @@ class FinanceController extends Controller
             'salesCount',
             'topProducts',
             'expensesByCategory',
-            'chartData'
+            'chartData',
+            'activeBranch',
+            'allBranches',
+            'filterBranchId',
+            'showingAllBranches',
+            'viewingBranch'
         ));
     }
 
     /**
      * Obtener top 5 productos más vendidos del mes
      */
-    private function getTopProducts($month, $year)
+    private function getTopProducts($month, $year, $branchId = null)
     {
-        return SaleItem::select('product_id', DB::raw('SUM(quantity) as total_quantity'))
-            ->whereHas('sale', function ($query) use ($month, $year) {
-                $query->whereYear('created_at', $year)
-                      ->whereMonth('created_at', $month);
-            })
-            ->with('product')
-            ->groupBy('product_id')
-            ->orderBy('total_quantity', 'desc')
-            ->limit(5)
-            ->get();
+        $query = SaleItem::select('product_id', DB::raw('SUM(quantity) as total_quantity'));
+
+        if ($branchId === null) {
+            // Sin branch_id específico, usa el scope normal (sucursal activa)
+            $query->whereHas('sale', function ($q) use ($month, $year) {
+                $q->whereYear('created_at', $year)
+                  ->whereMonth('created_at', $month);
+            });
+        } else {
+            // Con branch_id específico o null para todas
+            $query->whereHas('sale', function ($q) use ($month, $year, $branchId) {
+                $q->withoutBranchScope()
+                  ->whereYear('created_at', $year)
+                  ->whereMonth('created_at', $month);
+                if ($branchId !== 'all') {
+                    $q->where('branch_id', $branchId);
+                }
+            });
+        }
+
+        return $query->with('product')
+                    ->groupBy('product_id')
+                    ->orderBy('total_quantity', 'desc')
+                    ->limit(5)
+                    ->get();
     }
 
     /**
@@ -182,25 +278,96 @@ class FinanceController extends Controller
     {
         $month = $request->get('month', now()->month);
         $year = $request->get('year', now()->year);
+        $filterBranchId = $request->get('branch_id', null);
 
-        // Obtener datos del mes
-        $income = Sale::whereYear('created_at', $year)
-                     ->whereMonth('created_at', $month)
-                     ->sum('total');
+        $branchName = '';
+        $showingAllBranches = false;
 
-        $expensesList = Expense::forMonth($month, $year)
-                              ->orderBy('date')
-                              ->get();
+        // Determinar qué datos mostrar según el filtro
+        if ($filterBranchId === 'all') {
+            // Todas las sucursales
+            $showingAllBranches = true;
+            $branchName = 'Todas las Sucursales';
+
+            $income = Sale::withoutBranchScope()
+                         ->whereYear('created_at', $year)
+                         ->whereMonth('created_at', $month)
+                         ->sum('total');
+
+            $expensesList = Expense::withoutBranchScope()
+                                  ->whereYear('date', $year)
+                                  ->whereMonth('date', $month)
+                                  ->orderBy('date')
+                                  ->get();
+
+            $salesCount = Sale::withoutBranchScope()
+                             ->whereYear('created_at', $year)
+                             ->whereMonth('created_at', $month)
+                             ->count();
+
+            $expensesByCategory = Expense::withoutBranchScope()
+                                        ->whereYear('date', $year)
+                                        ->whereMonth('date', $month)
+                                        ->select('category', DB::raw('SUM(amount) as total'))
+                                        ->groupBy('category')
+                                        ->orderBy('total', 'desc')
+                                        ->get();
+
+        } elseif ($filterBranchId) {
+            // Sucursal específica
+            $branch = \App\Models\Branch::find($filterBranchId);
+            $branchName = $branch ? $branch->name : 'Sucursal Activa';
+
+            $income = Sale::withoutBranchScope()
+                         ->where('branch_id', $filterBranchId)
+                         ->whereYear('created_at', $year)
+                         ->whereMonth('created_at', $month)
+                         ->sum('total');
+
+            $expensesList = Expense::withoutBranchScope()
+                                  ->where('branch_id', $filterBranchId)
+                                  ->whereYear('date', $year)
+                                  ->whereMonth('date', $month)
+                                  ->orderBy('date')
+                                  ->get();
+
+            $salesCount = Sale::withoutBranchScope()
+                             ->where('branch_id', $filterBranchId)
+                             ->whereYear('created_at', $year)
+                             ->whereMonth('created_at', $month)
+                             ->count();
+
+            $expensesByCategory = Expense::withoutBranchScope()
+                                        ->where('branch_id', $filterBranchId)
+                                        ->whereYear('date', $year)
+                                        ->whereMonth('date', $month)
+                                        ->select('category', DB::raw('SUM(amount) as total'))
+                                        ->groupBy('category')
+                                        ->orderBy('total', 'desc')
+                                        ->get();
+
+        } else {
+            // Sucursal activa (por defecto)
+            $activeBranch = \App\Models\Branch::find(session('active_branch_id'));
+            $branchName = $activeBranch ? $activeBranch->name : 'Sucursal Activa';
+
+            $income = Sale::whereYear('created_at', $year)
+                         ->whereMonth('created_at', $month)
+                         ->sum('total');
+
+            $expensesList = Expense::forMonth($month, $year)
+                                  ->orderBy('date')
+                                  ->get();
+
+            $salesCount = Sale::whereYear('created_at', $year)
+                             ->whereMonth('created_at', $month)
+                             ->count();
+
+            $expensesByCategory = Expense::getTotalByCategory($month, $year);
+        }
 
         $totalExpenses = $expensesList->sum('amount');
         $result = $income - $totalExpenses;
-        $salesCount = Sale::whereYear('created_at', $year)
-                         ->whereMonth('created_at', $month)
-                         ->count();
-
-        // Gastos por categoría (para gráfico de torta)
-        $expensesByCategory = Expense::getTotalByCategory($month, $year);
-
         $monthName = Carbon::create($year, $month, 1)->locale('es')->translatedFormat('F Y');
 
         // Retornar vista imprimible
@@ -213,7 +380,9 @@ class FinanceController extends Controller
             'result',
             'salesCount',
             'expensesList',
-            'expensesByCategory'
+            'expensesByCategory',
+            'branchName',
+            'showingAllBranches'
         ));
     }
 
