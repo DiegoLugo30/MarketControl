@@ -14,14 +14,12 @@ class Product extends Model
         'description',
         'price',
         'price_per_kg',
-        'stock', // Mantener temporalmente para compatibilidad
         'is_weighted',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'price_per_kg' => 'decimal:2',
-        'stock' => 'integer', // Mantener temporalmente para compatibilidad
         'is_weighted' => 'boolean',
     ];
 
