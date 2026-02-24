@@ -55,10 +55,10 @@
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <div class="flex justify-center space-x-2">
-                                    <a href="{{ url('/providers/' . $provider->id . '/edit') }}" class="text-blue-600 hover:text-blue-800" title="Editar">
+                                    <a href="{{ env('APP_URL') }}/providers/{{ $provider->id }}/edit" class="text-blue-600 hover:text-blue-800" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ url('/providers/' . $provider->id) }}" method="POST" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar este proveedor?')">
+                                    <form action="{{ env('APP_URL') }}/providers/{{ $provider->id }}" method="POST" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar este proveedor?')">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 hover:text-red-800" title="Eliminar">

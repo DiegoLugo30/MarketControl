@@ -11,7 +11,7 @@
             </h1>
         </div>
 
-        <form action="{{ route('providers.update', $provider) }}" method="POST">
+        <form action="{{ env('APP_URL') }}/providers/{{ $provider->id }}" method="POST">
             @csrf
             @method('PUT')
 
