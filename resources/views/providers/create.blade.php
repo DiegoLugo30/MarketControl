@@ -11,7 +11,7 @@
             </h1>
         </div>
 
-        <form action="{{ route('providers.store') }}" method="POST">
+        <form action="{{ env('APP_URL') }}/providers" method="POST">
             @csrf
 
             <!-- Nombre -->
