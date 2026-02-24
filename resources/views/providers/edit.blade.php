@@ -87,7 +87,7 @@
                 <input
                         type="text"
                         name="delivery_day"
-                        value="{{ old('delivery_day') }}"
+                        value="{{ old('delivery_day', $provider->delivery_day) }}"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('delivery_day') border-red-500 @enderror"
                         placeholder="Ej: lunes, martes, etc..."
                 >
