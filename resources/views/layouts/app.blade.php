@@ -75,6 +75,9 @@
                     <a href="{{ env('APP_URL') }}/sales" class="hover:bg-green-700 px-4 py-2 rounded transition">
                     <i class="fas fa-receipt"></i> Ventas
                     </a>
+                    <a href="{{ env('APP_URL') }}/providers" class="hover:bg-green-700 px-4 py-2 rounded transition">
+                        <i class="fas fa-truck-moving"></i> Proveedores
+                    </a>
                     <a href="{{ env('APP_URL') }}/finances" class="hover:bg-green-700 px-4 py-2 rounded transition">
                     <i class="fas fa-chart-line"></i> Finanzas
                     </a>

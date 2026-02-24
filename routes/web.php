@@ -3,6 +3,7 @@
 use App\Http\Controllers\BarcodeController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProvidersController;
 use App\Http\Controllers\SaleController;
 use Illuminate\Support\Facades\Route;
 
@@ -62,3 +63,6 @@ Route::get('/finances/export-report', [\App\Http\Controllers\FinanceController::
 // Rutas de sucursales (branches)
 Route::resource('branches', BranchController::class);
 Route::post('/branches/set-active', [BranchController::class, 'setActive'])->name('branches.set-active');
+
+// Rutas de proveedores
+Route::resource('providers', ProvidersController::class);
