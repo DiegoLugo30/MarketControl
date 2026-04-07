@@ -99,6 +99,8 @@
                                 <option value="efectivo" selected>💵 Efectivo</option>
                                 <option value="debito">💳 Débito</option>
                                 <option value="transferencia">🏦 Transferencia</option>
+                                <option value="cuenta_dni">📱 Cuenta DNI</option>
+                                <option value="rappi">🛵 Rappi</option>
                             </select>
                         </div>
                     </div>
