@@ -34,7 +34,7 @@ class SaleController extends Controller
             'total' => 'required|numeric|min:0',
             'discount_amount' => 'nullable|numeric|min:0',
             'discount_description' => 'nullable|string|max:255',
-            'payment_method' => 'required|in:efectivo,debito,transferencia',
+            'payment_method' => 'required|in:efectivo,debito,transferencia,cuenta_dni,rappi',
         ]);
 
         try {
@@ -259,7 +259,9 @@ class SaleController extends Controller
             $paymentIcons = [
                 'efectivo' => '💵',
                 'debito' => '💳',
-                'transferencia' => '🏦'
+                'transferencia' => '🏦',
+                'cuenta_dni' => '📱',
+                'rappi' => '🛵',
             ];
 
             foreach ($sales as $sale) {

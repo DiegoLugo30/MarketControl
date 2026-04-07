@@ -107,12 +107,16 @@
                                         $paymentIcons = [
                                             'efectivo' => '💵',
                                             'debito' => '💳',
-                                            'transferencia' => '🏦'
+                                            'transferencia' => '🏦',
+                                            'cuenta_dni' => '📱',
+                                            'rappi' => '🛵',
                                         ];
                                         $paymentColors = [
                                             'efectivo' => 'bg-green-100 text-green-800',
                                             'debito' => 'bg-blue-100 text-blue-800',
-                                            'transferencia' => 'bg-purple-100 text-purple-800'
+                                            'transferencia' => 'bg-purple-100 text-purple-800',
+                                            'cuenta_dni' => 'bg-green-100 text-green-800',
+                                            'rappi' => 'bg-red-100 text-red-800',
                                         ];
                                         $paymentMethod = $sale->payment_method ?? 'efectivo';
                                     @endphp
