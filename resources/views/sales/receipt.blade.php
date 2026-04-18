@@ -15,18 +15,18 @@
             <p class="text-sm text-gray-500 font-mono">Venta #{{ $sale->id }}</p>
             @php
                 $paymentIcons = [
-                    'efectivo' => '💵',
-                    'debito' => '💳',
+                    'efectivo'      => '💵',
+                    'debito'        => '💳',
                     'transferencia' => '🏦',
-                    'cuenta_dni' => '📱',
-                    'rappi' => '🛵',
+                    'cuenta_dni'    => '📱',
+                    'rappi'         => '🛵',
                 ];
                 $paymentColors = [
-                    'efectivo' => 'bg-green-100 text-green-800',
-                    'debito' => 'bg-blue-100 text-blue-800',
+                    'efectivo'      => 'bg-green-100 text-green-800',
+                    'debito'        => 'bg-blue-100 text-blue-800',
                     'transferencia' => 'bg-purple-100 text-purple-800',
-                    'cuenta_dni' => 'bg-green-100 text-green-800',
-                    'rappi' => 'bg-red-100 text-red-800',
+                    'cuenta_dni'    => 'bg-green-100 text-green-800',
+                    'rappi'         => 'bg-red-100 text-red-800',
                 ];
                 $paymentMethod = $sale->payment_method ?? 'efectivo';
             @endphp
@@ -54,22 +54,36 @@
                 <tbody class="divide-y">
                     @foreach($sale->items as $item)
                         <tr>
+                            {{-- Product name: always from snapshot; badges for weighted / manual --}}
                             <td class="px-4 py-3">
-                                <div class="flex items-center gap-2">
-                                    <p class="font-semibold">{{ $item->product->name }}</p>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <p class="font-semibold">{{ $item->getDisplayName() }}</p>
+
                                     @if($item->isWeighted())
                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-800">
                                             <i class="fas fa-weight mr-1"></i> Pesable
                                         </span>
                                     @endif
-                                </div>
-                                <p class="text-sm text-gray-500 font-mono">
-                                    {{ $item->product->internal_code }}
-                                    @if($item->product->barcode)
-                                        <span class="text-gray-400">| {{ $item->product->barcode }}</span>
+
+                                    @if($item->is_custom)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-orange-100 text-orange-800">
+                                            <i class="fas fa-pencil-alt mr-1"></i> Manual
+                                        </span>
                                     @endif
-                                </p>
+                                </div>
+
+                                {{-- Show catalogue codes only when a product record exists --}}
+                                @if(!$item->is_custom && $item->product)
+                                    <p class="text-sm text-gray-500 font-mono">
+                                        {{ $item->product->internal_code }}
+                                        @if($item->product->barcode)
+                                            <span class="text-gray-400">| {{ $item->product->barcode }}</span>
+                                        @endif
+                                    </p>
+                                @endif
                             </td>
+
+                            {{-- Quantity or weight --}}
                             <td class="px-4 py-3 text-center font-semibold">
                                 @if($item->isWeighted())
                                     <span class="text-blue-600">{{ number_format($item->weight, 3) }} kg</span>
@@ -77,13 +91,23 @@
                                     {{ $item->quantity }} ud.
                                 @endif
                             </td>
+
+                            {{-- Unit / per-kg price --}}
                             <td class="px-4 py-3 text-right">
                                 @if($item->isWeighted())
-                                    ${{ number_format($item->product->price_per_kg, 2) }}<span class="text-xs text-gray-500">/kg</span>
+                                    @php
+                                        $pricePerKg = $item->product
+                                            ? $item->product->price_per_kg
+                                            : ((float)$item->weight > 0
+                                                ? (float)$item->price / (float)$item->weight
+                                                : (float)$item->price);
+                                    @endphp
+                                    ${{ number_format($pricePerKg, 2) }}<span class="text-xs text-gray-500">/kg</span>
                                 @else
-                                    ${{ number_format($item->product->price, 2) }}
+                                    ${{ number_format($item->price, 2) }}
                                 @endif
                             </td>
+
                             <td class="px-4 py-3 text-right font-semibold">
                                 ${{ number_format($item->subtotal, 2) }}
                             </td>
@@ -156,10 +180,10 @@
                 <i class="fas fa-print"></i> Imprimir
             </button>
             <a href="{{ env('APP_URL') }}/" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
-            <i class="fas fa-cash-register"></i> Nueva Venta
+                <i class="fas fa-cash-register"></i> Nueva Venta
             </a>
             <a href="{{ env('APP_URL') }}/sales" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700">
-            <i class="fas fa-list"></i> Ver Ventas
+                <i class="fas fa-list"></i> Ver Ventas
             </a>
         </div>
     </div>

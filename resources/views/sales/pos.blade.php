@@ -188,6 +188,133 @@
     </div>
 </div>
 
+<!-- Modal de Producto Manual (Master Barcode) -->
+<div id="custom-product-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+        <div class="text-center mb-5">
+            <div class="text-orange-500 text-5xl mb-2">
+                <i class="fas fa-pencil-alt"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-1">Producto Manual</h2>
+            <p class="text-gray-500 text-sm">Complete los datos del producto a vender</p>
+        </div>
+
+        <div class="space-y-4">
+            <!-- Nombre -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">
+                    Nombre del Producto <span class="text-red-500">*</span>
+                </label>
+                <input
+                    type="text"
+                    id="custom-product-name"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    placeholder="Ej: Helado de fresa"
+                    maxlength="255"
+                    autocomplete="off"
+                >
+            </div>
+
+            <!-- Tipo -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">
+                    Tipo <span class="text-red-500">*</span>
+                </label>
+                <select id="custom-product-type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400">
+                    <option value="unit">Por Unidad</option>
+                    <option value="weight">Por Peso (kg)</option>
+                </select>
+            </div>
+
+            <!-- Campos para tipo "unit" -->
+            <div id="custom-unit-fields">
+                <div class="mb-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">
+                        Precio Unitario ($) <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="number"
+                        id="custom-unit-price"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        placeholder="0.00"
+                        step="0.01"
+                        min="0.01"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">
+                        Cantidad <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="number"
+                        id="custom-unit-quantity"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        placeholder="1"
+                        step="1"
+                        min="1"
+                        value="1"
+                    >
+                </div>
+            </div>
+
+            <!-- Campos para tipo "weight" -->
+            <div id="custom-weight-fields" class="hidden">
+                <div class="mb-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">
+                        Precio por KG ($) <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="number"
+                        id="custom-weight-price-per-kg"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        placeholder="0.00"
+                        step="0.01"
+                        min="0.01"
+                    >
+                </div>
+                <div class="flex gap-2">
+                    <div class="flex-1">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">
+                            Peso <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="number"
+                            id="custom-weight-value"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+                            placeholder="0"
+                            step="1"
+                            min="1"
+                        >
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Unidad</label>
+                        <select id="custom-weight-unit" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none">
+                            <option value="g" selected>g</option>
+                            <option value="kg">kg</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="bg-green-50 border border-green-200 rounded-lg p-3 mt-3 text-center">
+                    <p class="text-sm text-gray-600">Precio Total</p>
+                    <p class="text-2xl font-bold text-green-600" id="custom-weight-total">$0.00</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error message -->
+        <div id="custom-product-error" class="hidden mt-3 p-2 bg-red-50 border border-red-200 rounded text-red-700 text-sm"></div>
+
+        <div class="flex gap-3 mt-5">
+            <button id="btn-add-custom-product" class="flex-1 bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition font-semibold">
+                <i class="fas fa-plus"></i> Agregar al Carrito
+            </button>
+            <button id="btn-cancel-custom-product" class="flex-1 bg-gray-500 text-white py-3 rounded-lg hover:bg-gray-600 transition font-semibold">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal de confirmación de venta -->
 <div id="sale-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
@@ -349,6 +476,14 @@ $(document).ready(function() {
             },
             success: function(response) {
                 console.log('✅ [POS] Respuesta:', response);
+
+                // ── Master barcode → manual product entry ──────────────────
+                if (response.is_master_barcode) {
+                    $('#pos-barcode-input').val('');
+                    showCustomProductModal();
+                    return;
+                }
+                // ──────────────────────────────────────────────────────────
 
                 if (response.found_locally) {
                     const product = response.product;
@@ -622,13 +757,20 @@ $(document).ready(function() {
                     ? ''
                     : `<p class="text-sm text-green-600 font-semibold">$${item.price.toFixed(2)} c/u</p>`;
 
+                const weightedBadge = item.is_weighted
+                    ? '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Pesable</span>'
+                    : '';
+                const customBadge = item.is_custom
+                    ? '<span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded ml-1"><i class="fas fa-pencil-alt"></i> Manual</span>'
+                    : '';
+
                 const itemHtml = `
                     <div class="cart-item bg-white border border-gray-200 rounded-lg p-4">
                         <div class="flex justify-between items-start mb-2">
                             <div class="flex-1">
                                 <h3 class="font-semibold text-gray-800">${item.name}</h3>
                                 ${priceText}
-                                ${item.is_weighted ? '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Pesable</span>' : ''}
+                                ${weightedBadge}${customBadge}
                             </div>
                             <button class="text-red-500 hover:text-red-700" onclick="removeFromCart(${index})">
                                 <i class="fas fa-times"></i>
@@ -721,9 +863,10 @@ $(document).ready(function() {
     // Incrementar cantidad (solo productos normales)
     window.incrementQuantity = function(index) {
         const item = cart[index];
-        if (!item.is_weighted && item.quantity < item.stock) {
+        // Custom items have no stock restriction; catalogue items respect stock
+        if (!item.is_weighted && (item.is_custom || item.quantity < item.stock)) {
             item.quantity++;
-            saveCartToStorage(); // Persistir cambios
+            saveCartToStorage();
             renderCart();
         } else if (!item.is_weighted) {
             alert('No hay más stock disponible');
@@ -839,10 +982,13 @@ $(document).ready(function() {
                 const itemDiscountAmount = (itemSubtotal * itemDiscountPercent / 100);
 
                 return {
-                    product_id: item.product_id,
-                    quantity: item.is_weighted ? 1 : item.quantity,
-                    weight: item.is_weighted ? item.weight : null,
-                    price: item.price,  // Enviar precio unitario, no el total
+                    product_id:   item.product_id,   // null for custom items
+                    name:         item.name,
+                    is_custom:    item.is_custom ? 1 : 0,  // Laravel boolean rule needs 1/0, not true/false strings
+                    unit_type:    item.unit_type || (item.is_weighted ? 'weight' : 'unit'),
+                    quantity:     item.is_weighted ? 1 : item.quantity,
+                    weight:       item.is_weighted ? item.weight : null,
+                    price:        item.price,
                     item_discount: itemDiscountAmount
                 };
             }),
@@ -900,8 +1046,8 @@ $(document).ready(function() {
     });
 
     $(document).on('click', function(e) {
-        // No enfocar si estamos en el modal de peso
-        if (!$('#weight-modal').hasClass('hidden')) {
+        // No enfocar si estamos en el modal de peso o en el modal de producto manual
+        if (!$('#weight-modal').hasClass('hidden') || !$('#custom-product-modal').hasClass('hidden')) {
             return;
         }
 
@@ -954,6 +1100,145 @@ $(document).ready(function() {
     };
 
     focusBarcodeInput();
+
+    // ========================================
+    // PRODUCTO MANUAL (MASTER BARCODE)
+    // ========================================
+
+    function showCustomProductModal() {
+        $('#custom-product-name').val('');
+        $('#custom-product-type').val('unit');
+        $('#custom-unit-price').val('');
+        $('#custom-unit-quantity').val('1');
+        $('#custom-weight-price-per-kg').val('');
+        $('#custom-weight-value').val('');
+        $('#custom-weight-unit').val('g');
+        $('#custom-weight-total').text('$0.00');
+        $('#custom-product-error').addClass('hidden').text('');
+        $('#custom-unit-fields').removeClass('hidden');
+        $('#custom-weight-fields').addClass('hidden');
+
+        $('#custom-product-modal').removeClass('hidden');
+        setTimeout(() => $('#custom-product-name').focus(), 50);
+    }
+
+    function closeCustomProductModal() {
+        $('#custom-product-modal').addClass('hidden');
+        focusBarcodeInput();
+    }
+
+    // Toggle unit / weight fields
+    $('#custom-product-type').on('change', function() {
+        const type = $(this).val();
+        if (type === 'unit') {
+            $('#custom-unit-fields').removeClass('hidden');
+            $('#custom-weight-fields').addClass('hidden');
+        } else {
+            $('#custom-unit-fields').addClass('hidden');
+            $('#custom-weight-fields').removeClass('hidden');
+            setTimeout(() => $('#custom-weight-price-per-kg').focus(), 50);
+        }
+        $('#custom-product-error').addClass('hidden');
+    });
+
+    // Live price recalculation for weight type
+    function recalculateCustomWeightTotal() {
+        const pricePerKg = parseFloat($('#custom-weight-price-per-kg').val()) || 0;
+        let weight = parseFloat($('#custom-weight-value').val()) || 0;
+        const unit = $('#custom-weight-unit').val();
+
+        if (unit === 'g') { weight = weight / 1000; }
+
+        const total = (pricePerKg > 0 && weight > 0) ? pricePerKg * weight : 0;
+        $('#custom-weight-total').text('$' + total.toFixed(2));
+    }
+
+    $('#custom-weight-price-per-kg, #custom-weight-value, #custom-weight-unit')
+        .on('input change', recalculateCustomWeightTotal);
+
+    // Add custom item to cart
+    $('#btn-add-custom-product').on('click', function() {
+        const name = $('#custom-product-name').val().trim();
+        const type = $('#custom-product-type').val();
+
+        if (!name) {
+            showCustomProductError('El nombre del producto es requerido.');
+            return;
+        }
+
+        if (type === 'unit') {
+            const price    = parseFloat($('#custom-unit-price').val());
+            const quantity = parseInt($('#custom-unit-quantity').val());
+
+            if (!price || price <= 0) {
+                showCustomProductError('Ingrese un precio válido mayor a $0.');
+                return;
+            }
+            if (!quantity || quantity < 1) {
+                showCustomProductError('Ingrese una cantidad válida (mínimo 1).');
+                return;
+            }
+
+            cart.push({
+                product_id:   null,
+                name:         name,
+                price:        price,
+                quantity:     quantity,
+                stock:        9999,   // no stock restriction
+                is_weighted:  false,
+                weight:       null,
+                item_discount: 0,
+                is_custom:    true,
+                unit_type:    'unit',
+            });
+
+        } else { // weight
+            const pricePerKg = parseFloat($('#custom-weight-price-per-kg').val());
+            let   weight     = parseFloat($('#custom-weight-value').val());
+            const unit       = $('#custom-weight-unit').val();
+
+            if (!pricePerKg || pricePerKg <= 0) {
+                showCustomProductError('Ingrese un precio por kg válido mayor a $0.');
+                return;
+            }
+            if (!weight || weight <= 0) {
+                showCustomProductError('Ingrese un peso válido mayor a 0.');
+                return;
+            }
+
+            if (unit === 'g') { weight = weight / 1000; }
+
+            if (weight <= 0) {
+                showCustomProductError('El peso debe ser mayor a 0.');
+                return;
+            }
+
+            const totalPrice = pricePerKg * weight;
+
+            cart.push({
+                product_id:   null,
+                name:         name,
+                price:        totalPrice,
+                quantity:     1,
+                stock:        0,
+                is_weighted:  true,
+                weight:       weight,
+                item_discount: 0,
+                is_custom:    true,
+                unit_type:    'weight',
+            });
+        }
+
+        saveCartToStorage();
+        renderCart();
+        closeCustomProductModal();
+    });
+
+    function showCustomProductError(message) {
+        $('#custom-product-error').removeClass('hidden').text(message);
+    }
+
+    $('#btn-cancel-custom-product').on('click', closeCustomProductModal);
 });
 </script>
 @endpush

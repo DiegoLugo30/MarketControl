@@ -12,60 +12,80 @@ class SaleItem extends Model
     protected $fillable = [
         'sale_id',
         'product_id',
+        'name',
         'quantity',
         'weight',
         'price',
         'item_discount',
+        'is_custom',
+        'unit_type',
     ];
 
     protected $casts = [
-        'quantity' => 'integer',
-        'weight' => 'decimal:3',
-        'price' => 'decimal:2',
+        'quantity'      => 'integer',
+        'weight'        => 'decimal:3',
+        'price'         => 'decimal:2',
         'item_discount' => 'decimal:2',
+        'is_custom'     => 'boolean',
     ];
 
-    /**
-     * Relación con venta
-     */
+    // -------------------------------------------------------------------------
+    // Relationships
+    // -------------------------------------------------------------------------
+
     public function sale(): BelongsTo
     {
         return $this->belongsTo(Sale::class);
     }
 
-    /**
-     * Relación con producto
-     */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
+    // -------------------------------------------------------------------------
+    // Accessors / helpers
+    // -------------------------------------------------------------------------
+
     /**
-     * Calcular subtotal del item (antes de descuento)
-     * Compatible con productos por unidad y por peso
+     * The human-readable name for this item.
+     *
+     * Priority:
+     *   1. Snapshot stored at sale time (name column) – set for all new records.
+     *   2. Live product relation – fallback for legacy records created before the
+     *      snapshot column existed.
+     *   3. Hard fallback when the product has since been deleted.
+     */
+    public function getDisplayName(): string
+    {
+        return $this->name
+            ?? $this->product?->name
+            ?? 'Producto eliminado';
+    }
+
+    /**
+     * Subtotal before item-level discount.
+     * For weighted items the `price` column already stores the total (weight × rate).
      */
     public function getSubtotalAttribute(): float
     {
-        // Si tiene peso, es un producto pesable (el precio ya viene calculado)
         if ($this->weight) {
-            return $this->price;
+            return (float) $this->price;
         }
 
-        // Producto por unidad
-        return $this->quantity * $this->price;
+        return $this->quantity * (float) $this->price;
     }
 
     /**
-     * Calcular el total del item después del descuento
+     * Final total after item-level discount.
      */
     public function getTotalWithDiscountAttribute(): float
     {
-        return $this->subtotal - ($this->item_discount ?? 0);
+        return $this->subtotal - ((float) ($this->item_discount ?? 0));
     }
 
     /**
-     * Verificar si es un item pesable
+     * True when this item was sold by weight rather than by unit.
      */
     public function isWeighted(): bool
     {
@@ -73,7 +93,7 @@ class SaleItem extends Model
     }
 
     /**
-     * Obtener texto descriptivo del item
+     * Human-readable quantity/weight string.
      */
     public function getQuantityText(): string
     {

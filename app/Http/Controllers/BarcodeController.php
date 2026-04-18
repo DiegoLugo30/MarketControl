@@ -42,6 +42,18 @@ class BarcodeController extends Controller
             ]);
         }
 
+        // ── Master Barcode: trigger manual product entry in the POS ───────────
+        if ($code === config('pos.master_barcode')) {
+            \Log::info('🎯 Master barcode escaneado – modo producto manual activado');
+
+            return response()->json([
+                'success'          => true,
+                'is_master_barcode' => true,
+                'message'          => 'Modo de producto manual activado',
+            ]);
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         try {
             // Normalizar código a mayúsculas para búsqueda case-insensitive
             $normalizedCode = strtoupper($code);
