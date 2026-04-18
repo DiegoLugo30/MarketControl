@@ -12,6 +12,6 @@ return [
     | Override in .env:  MASTER_BARCODE=9999999999999
     |
     */
-    'master_barcode' => env('MASTER_BARCODE', '9999999999999'),
+    'master_barcode' => env('MASTER_BARCODE', 'MPA9999900000'),
 
 ];
