@@ -19,36 +19,89 @@ class SaleController extends Controller
     }
 
     /**
-     * Procesar y completar una venta
-     * Soporta productos por unidad y por peso
+     * Procesar y completar una venta.
+     *
+     * Soporta tres tipos de items:
+     *   1. Producto por unidad  – product_id present, is_weighted = false
+     *   2. Producto por peso    – product_id present, is_weighted = true
+     *   3. Producto manual      – is_custom = true, product_id = null
      */
     public function complete(Request $request)
     {
         $validated = $request->validate([
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'nullable|integer|min:1',
-            'items.*.weight' => 'nullable|numeric|min:0.001',
-            'items.*.price' => 'required|numeric|min:0',
-            'items.*.item_discount' => 'nullable|numeric|min:0',
-            'total' => 'required|numeric|min:0',
-            'discount_amount' => 'nullable|numeric|min:0',
-            'discount_description' => 'nullable|string|max:255',
-            'payment_method' => 'required|in:efectivo,debito,transferencia,cuenta_dni,rappi',
+            'items'                    => 'required|array|min:1',
+            'items.*.product_id'       => 'nullable|exists:products,id',
+            'items.*.name'             => 'nullable|string|max:255',
+            'items.*.is_custom'        => 'nullable|boolean',
+            'items.*.unit_type'        => 'nullable|in:unit,weight',
+            'items.*.quantity'         => 'nullable|integer|min:1',
+            'items.*.weight'           => 'nullable|numeric|min:0.001',
+            'items.*.price'            => 'required|numeric|min:0',
+            'items.*.item_discount'    => 'nullable|numeric|min:0',
+            'total'                    => 'required|numeric|min:0',
+            'discount_amount'          => 'nullable|numeric|min:0',
+            'discount_description'     => 'nullable|string|max:255',
+            'payment_method'           => 'required|in:efectivo,debito,transferencia,cuenta_dni,rappi',
         ]);
+
+        // ── Per-item business-rule validation ────────────────────────────────
+        foreach ($validated['items'] as $idx => $item) {
+            $isCustom = !empty($item['is_custom']);
+            $pos      = $idx + 1;
+
+            if ($isCustom) {
+                if (empty($item['name'])) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Item #{$pos}: el nombre es requerido para productos manuales.",
+                    ], 422);
+                }
+
+                $unitType = $item['unit_type'] ?? null;
+
+                if (!$unitType) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Item #{$pos}: el tipo de unidad es requerido para productos manuales.",
+                    ], 422);
+                }
+
+                if ($unitType === 'weight') {
+                    if (empty($item['weight']) || $item['weight'] <= 0) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Item #{$pos}: el peso debe ser mayor a 0.",
+                        ], 422);
+                    }
+                } else {
+                    if (empty($item['quantity']) || $item['quantity'] < 1) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Item #{$pos}: la cantidad debe ser al menos 1.",
+                        ], 422);
+                    }
+                }
+            } else {
+                if (empty($item['product_id'])) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Item #{$pos}: product_id es requerido para items no manuales.",
+                    ], 422);
+                }
+            }
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         try {
             DB::beginTransaction();
 
-            // Verificar stock de productos no pesables
-            // Obtener branch ID de forma segura
+            // Resolve active branch
             $branchId = session('active_branch_id');
             if (!$branchId) {
                 $mainBranch = \App\Models\Branch::main();
-                $branchId = $mainBranch ? $mainBranch->id : null;
+                $branchId   = $mainBranch?->id;
             }
 
-            // Si no hay branch configurado, no se puede completar la venta
             if (!$branchId) {
                 DB::rollBack();
                 return response()->json([
@@ -57,12 +110,16 @@ class SaleController extends Controller
                 ], 500);
             }
 
+            // ── Stock check (catalogue products only) ────────────────────────
             foreach ($validated['items'] as $item) {
+                if (!empty($item['is_custom'])) {
+                    continue; // Custom items have no stock to check
+                }
+
                 $product = Product::findOrFail($item['product_id']);
 
-                // Solo verificar stock para productos no pesables
                 if (!$product->is_weighted) {
-                    $quantity = $item['quantity'] ?? 1;
+                    $quantity       = $item['quantity'] ?? 1;
                     $availableStock = $product->getStockInBranch($branchId);
 
                     if (!$product->hasStockInBranch($branchId, $quantity)) {
@@ -75,38 +132,59 @@ class SaleController extends Controller
                 }
             }
 
-            // Crear la venta
+            // ── Create the sale record ────────────────────────────────────────
             $sale = Sale::create([
-                'total' => $validated['total'],
-                'discount_amount' => $validated['discount_amount'] ?? 0,
+                'total'                => $validated['total'],
+                'discount_amount'      => $validated['discount_amount'] ?? 0,
                 'discount_description' => $validated['discount_description'] ?? null,
-                'payment_method' => $validated['payment_method'],
-                'created_at' => now(),
+                'payment_method'       => $validated['payment_method'],
+                'created_at'           => now(),
             ]);
 
-            // Crear items y actualizar stock
+            // ── Create sale items ─────────────────────────────────────────────
             foreach ($validated['items'] as $item) {
-                $product = Product::findOrFail($item['product_id']);
+                $isCustom = !empty($item['is_custom']);
 
                 $saleItemData = [
-                    'sale_id' => $sale->id,
-                    'product_id' => $product->id,
-                    'price' => $item['price'],
+                    'sale_id'       => $sale->id,
+                    'price'         => $item['price'],
                     'item_discount' => $item['item_discount'] ?? 0,
                 ];
 
-                // Determinar si es producto pesable o por unidad
-                if ($product->is_weighted && isset($item['weight'])) {
-                    // Producto pesable
-                    $saleItemData['weight'] = $item['weight'];
-                    $saleItemData['quantity'] = 1; // Para mantener compatibilidad
-                } else {
-                    // Producto por unidad
-                    $saleItemData['quantity'] = $item['quantity'] ?? 1;
-                    $saleItemData['weight'] = null;
+                if ($isCustom) {
+                    // ── Manual / custom product ───────────────────────────────
+                    $unitType = $item['unit_type'];
 
-                    // Decrementar stock solo para productos no pesables en la sucursal activa
-                    $product->decrementStockInBranch($branchId, $saleItemData['quantity']);
+                    $saleItemData['product_id'] = null;
+                    $saleItemData['name']       = $item['name'];
+                    $saleItemData['is_custom']  = true;
+                    $saleItemData['unit_type']  = $unitType;
+
+                    if ($unitType === 'weight') {
+                        $saleItemData['weight']   = $item['weight'];
+                        $saleItemData['quantity'] = 1;
+                    } else {
+                        $saleItemData['quantity'] = $item['quantity'] ?? 1;
+                        $saleItemData['weight']   = null;
+                    }
+                } else {
+                    // ── Catalogue product ─────────────────────────────────────
+                    $product = Product::findOrFail($item['product_id']);
+
+                    $saleItemData['product_id'] = $product->id;
+                    $saleItemData['name']       = $product->name; // snapshot
+                    $saleItemData['is_custom']  = false;
+                    $saleItemData['unit_type']  = $product->is_weighted ? 'weight' : 'unit';
+
+                    if ($product->is_weighted && isset($item['weight'])) {
+                        $saleItemData['weight']   = $item['weight'];
+                        $saleItemData['quantity'] = 1;
+                    } else {
+                        $saleItemData['quantity'] = $item['quantity'] ?? 1;
+                        $saleItemData['weight']   = null;
+
+                        $product->decrementStockInBranch($branchId, $saleItemData['quantity']);
+                    }
                 }
 
                 SaleItem::create($saleItemData);
@@ -146,19 +224,15 @@ class SaleController extends Controller
     {
         $query = Sale::query();
 
-        // Filtrar por fecha desde
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
 
-        // Filtrar por fecha hasta
         if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
         $sales = $query->orderBy('created_at', 'desc')->paginate(20);
-
-        // Mantener los parámetros de búsqueda en la paginación
         $sales->appends($request->only(['date_from', 'date_to']));
 
         return view('sales.index', compact('sales'));
@@ -171,20 +245,17 @@ class SaleController extends Controller
     {
         $query = Sale::with('items.product');
 
-        // Filtrar por fecha desde
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
 
-        // Filtrar por fecha hasta
         if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
         $sales = $query->orderBy('created_at', 'desc')->get();
 
-        // Determinar el nombre del archivo según el tipo de reporte
-        $type = $request->get('type', 'custom');
+        $type     = $request->get('type', 'custom');
         $fileName = 'ventas_';
 
         if ($type === 'daily') {
@@ -197,17 +268,15 @@ class SaleController extends Controller
 
         $fileName .= '.xls';
 
-        // Configurar headers para descarga de archivo Excel
         $headers = [
-            'Content-Type' => 'application/vnd.ms-excel; charset=utf-8',
+            'Content-Type'        => 'application/vnd.ms-excel; charset=utf-8',
             'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
-            'Pragma' => 'no-cache',
-            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires' => '0'
+            'Pragma'              => 'no-cache',
+            'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires'             => '0',
         ];
 
-        $callback = function() use ($sales) {
-            // Iniciar documento HTML/Excel con estilos
+        $callback = function () use ($sales) {
             echo '<!DOCTYPE html>';
             echo '<html>';
             echo '<head>';
@@ -227,11 +296,11 @@ class SaleController extends Controller
             echo '.number { text-align: right; }';
             echo '.center { text-align: center; }';
             echo '.money { color: #059669; font-weight: bold; }';
+            echo '.manual-badge { background-color: #fed7aa; color: #9a3412; padding: 1px 6px; border-radius: 4px; font-size: 11px; }';
             echo '</style>';
             echo '</head>';
             echo '<body>';
 
-            // Encabezado del reporte
             echo '<table>';
             echo '<tr><td colspan="8" class="header">📊 REPORTE DE VENTAS</td></tr>';
             echo '<tr><td class="info-label">Generado el:</td><td colspan="7" class="info-value">' . date('d/m/Y H:i:s') . '</td></tr>';
@@ -239,7 +308,6 @@ class SaleController extends Controller
             echo '<tr><td class="info-label">Total general:</td><td colspan="7" class="info-value money">$' . number_format($sales->sum('total'), 2) . '</td></tr>';
             echo '</table>';
 
-            // Tabla principal de ventas
             echo '<br/>';
             echo '<table>';
             echo '<thead>';
@@ -257,16 +325,16 @@ class SaleController extends Controller
             echo '<tbody>';
 
             $paymentIcons = [
-                'efectivo' => '💵',
-                'debito' => '💳',
+                'efectivo'      => '💵',
+                'debito'        => '💳',
                 'transferencia' => '🏦',
-                'cuenta_dni' => '📱',
-                'rappi' => '🛵',
+                'cuenta_dni'    => '📱',
+                'rappi'         => '🛵',
             ];
 
             foreach ($sales as $sale) {
                 $paymentMethod = $sale->payment_method ?? 'efectivo';
-                $paymentIcon = $paymentIcons[$paymentMethod] ?? '💵';
+                $paymentIcon   = $paymentIcons[$paymentMethod] ?? '💵';
 
                 echo '<tr class="data-row">';
                 echo '<td class="center">' . $sale->id . '</td>';
@@ -283,7 +351,6 @@ class SaleController extends Controller
             echo '</tbody>';
             echo '</table>';
 
-            // Detalle de productos vendidos
             echo '<br/><br/>';
             echo '<table>';
             echo '<tr><td colspan="9" class="header">📦 DETALLE DE PRODUCTOS VENDIDOS</td></tr>';
@@ -304,22 +371,47 @@ class SaleController extends Controller
 
             foreach ($sales as $sale) {
                 foreach ($sale->items as $item) {
-                    $product = $item->product;
+                    // Use snapshot name (works for custom items & deleted products)
+                    $productName = $item->getDisplayName();
+                    $isCustom    = $item->is_custom;
+
+                    // Barcode / code column
+                    if ($isCustom) {
+                        $productCode = '<span class="manual-badge">Manual</span>';
+                    } elseif ($item->product) {
+                        $productCode = htmlspecialchars(
+                            $item->product->barcode ?? $item->product->internal_code ?? '-'
+                        );
+                    } else {
+                        $productCode = '-';
+                    }
+
+                    // Quantity / weight display
                     $quantity = $item->isWeighted()
                         ? number_format($item->weight, 3) . ' kg'
                         : $item->quantity . ' ud.';
 
-                    $pricePerUnit = $item->isWeighted()
-                        ? number_format($product->price_per_kg, 2)
-                        : number_format($product->price, 2);
+                    // Unit price (always derivable from snapshot data)
+                    if ($item->isWeighted()) {
+                        $weightKg      = (float) $item->weight;
+                        $pricePerUnit  = $weightKg > 0
+                            ? '$' . number_format((float) $item->price / $weightKg, 2) . '/kg'
+                            : '$' . number_format((float) $item->price, 2);
+                    } else {
+                        $pricePerUnit = '$' . number_format((float) $item->price, 2);
+                    }
+
+                    $customLabel = $isCustom
+                        ? ' <span class="manual-badge">Manual</span>'
+                        : '';
 
                     echo '<tr class="data-row">';
                     echo '<td class="center">' . $sale->id . '</td>';
                     echo '<td>' . $sale->created_at->format('d/m/Y H:i:s') . '</td>';
-                    echo '<td>' . htmlspecialchars($product->name) . '</td>';
-                    echo '<td class="center">' . ($product->barcode ?? $product->internal_code) . '</td>';
+                    echo '<td>' . htmlspecialchars($productName) . $customLabel . '</td>';
+                    echo '<td class="center">' . $productCode . '</td>';
                     echo '<td class="center">' . $quantity . '</td>';
-                    echo '<td class="number">$' . $pricePerUnit . '</td>';
+                    echo '<td class="number">' . $pricePerUnit . '</td>';
                     echo '<td class="number">$' . number_format($item->subtotal, 2) . '</td>';
                     echo '<td class="number">$' . number_format($item->item_discount, 2) . '</td>';
                     echo '<td class="number money">$' . number_format($item->total_with_discount, 2) . '</td>';
