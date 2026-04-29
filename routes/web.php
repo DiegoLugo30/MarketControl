@@ -1,68 +1,113 @@
 <?php
 
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BarcodeController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProvidersController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\Store\OrderController;
+use App\Http\Controllers\Store\StoreController;
 use Illuminate\Support\Facades\Route;
 
-// Ruta principal - Punto de venta
-Route::get('/', [SaleController::class, 'pos'])->name('home');
+// ── Autenticación ────────────────────────────────────────────────────────────
+Route::middleware('guest')->group(function () {
+    Route::get('/login',     [LoginController::class,    'create'])->name('login');
+    Route::post('/login',    [LoginController::class,    'store']);
+    Route::get('/register',  [RegisterController::class, 'create'])->name('register');
+    Route::post('/register', [RegisterController::class, 'store']);
+});
 
-// Rutas de productos
-Route::resource('products', ProductController::class);
-Route::post('/products/search-barcode', [ProductController::class, 'searchByBarcode'])
-    ->name('products.search-barcode');
+Route::post('/logout', [LoginController::class, 'destroy'])
+    ->name('logout')
+    ->middleware('auth');
 
-// Rutas de escaneo de código de barras
-Route::get('/barcode/scan', [BarcodeController::class, 'scan'])->name('barcode.scan');
-Route::post('/barcode/search', [BarcodeController::class, 'search'])->name('barcode.search');
+// ── Raíz: redirige según rol o a login ──────────────────────────────────────
+Route::get('/', function () {
+    if (auth()->check()) {
+        return auth()->user()->isAdmin()
+            ? redirect()->route('admin.home')
+            : redirect()->route('store.index');
+    }
+    return redirect()->route('login');
+});
 
-// Endpoint de prueba para verificar que el servidor funciona
-Route::get('/test', function() {
+// ── Panel de administración — requiere auth + rol admin ──────────────────────
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+
+    // Punto de venta
+    Route::get('/', [SaleController::class, 'pos'])->name('home');
+    Route::get('/pos', [SaleController::class, 'pos'])->name('pos');
+
+    // Productos — la ruta personalizada va antes del resource para evitar conflictos
+    Route::post('products/search-barcode', [ProductController::class, 'searchByBarcode'])
+        ->name('products.search-barcode');
+    Route::resource('products', ProductController::class);
+
+    // Código de barras
+    Route::get('barcode/scan',    [BarcodeController::class, 'scan'])->name('barcode.scan');
+    Route::post('barcode/search', [BarcodeController::class, 'search'])->name('barcode.search');
+
+    // Ventas — export antes del segmento dinámico {id}
+    Route::get('sales/export',              [SaleController::class, 'export'])->name('sales.export');
+    Route::get('sales',                     [SaleController::class, 'index'])->name('sales.index');
+    Route::post('sales/complete',           [SaleController::class, 'complete'])->name('sales.complete');
+    Route::get('sales/{id}/receipt',        [SaleController::class, 'receipt'])->name('sales.receipt');
+    Route::get('sales/{id}/receipt-print',  [SaleController::class, 'receiptPrint'])->name('sales.receipt.print');
+
+    // Finanzas
+    Route::get('finances',                    [FinanceController::class, 'index'])->name('finances.index');
+    Route::get('finances/expenses',           [FinanceController::class, 'expenses'])->name('finances.expenses');
+    Route::get('finances/expenses/create',    [FinanceController::class, 'createExpense'])->name('finances.expenses.create');
+    Route::post('finances/expenses',          [FinanceController::class, 'storeExpense'])->name('finances.expenses.store');
+    Route::get('finances/expenses/{id}/edit', [FinanceController::class, 'editExpense'])->name('finances.expenses.edit');
+    Route::put('finances/expenses/{id}',      [FinanceController::class, 'updateExpense'])->name('finances.expenses.update');
+    Route::delete('finances/expenses/{id}',   [FinanceController::class, 'destroyExpense'])->name('finances.expenses.destroy');
+    Route::get('finances/export-report',      [FinanceController::class, 'exportReport'])->name('finances.export');
+
+    // Sucursales — set-active antes del resource para que no capture "set-active" como {branch}
+    Route::post('branches/set-active', [BranchController::class, 'setActive'])->name('branches.set-active');
+    Route::resource('branches', BranchController::class);
+
+    // Proveedores
+    Route::resource('providers', ProvidersController::class);
+
+    // Pedidos de la tienda
+    Route::get('orders',                [OrderController::class, 'index'])->name('orders.index');
+    Route::get('orders/{code}',         [OrderController::class, 'show'])->name('orders.show');
+    Route::post('orders/{code}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+});
+
+// ── Diagnóstico (sin auth) ───────────────────────────────────────────────────
+Route::get('/test', function () {
     return response()->json([
-        'status' => 'OK',
-        'message' => 'El servidor está funcionando correctamente',
-        'timestamp' => now()->toDateTimeString(),
-        'php_version' => phpversion(),
+        'status'          => 'OK',
+        'message'         => 'El servidor está funcionando correctamente',
+        'timestamp'       => now()->toDateTimeString(),
+        'php_version'     => phpversion(),
         'laravel_version' => app()->version(),
     ]);
 });
 
-Route::post('/test-post', function(\Illuminate\Http\Request $request) {
+Route::post('/test-post', function (\Illuminate\Http\Request $request) {
     \Log::info('🧪 Test POST recibido', [
-        'data' => $request->all(),
+        'data'    => $request->all(),
         'headers' => $request->headers->all(),
     ]);
 
     return response()->json([
-        'status' => 'OK',
-        'message' => 'POST recibido correctamente',
+        'status'        => 'OK',
+        'message'       => 'POST recibido correctamente',
         'data_received' => $request->all(),
-        'csrf_ok' => true,
+        'csrf_ok'       => true,
     ]);
 });
 
-// Rutas de ventas
-Route::get('/sales', [SaleController::class, 'index'])->name('sales.index');
-Route::post('/sales/complete', [SaleController::class, 'complete'])->name('sales.complete');
-Route::get('/sales/{id}/receipt', [SaleController::class, 'receipt'])->name('sales.receipt');
-Route::get('/sales/export', [SaleController::class, 'export'])->name('sales.export');
-
-// Rutas de finanzas
-Route::get('/finances', [\App\Http\Controllers\FinanceController::class, 'index'])->name('finances.index');
-Route::get('/finances/expenses', [\App\Http\Controllers\FinanceController::class, 'expenses'])->name('finances.expenses');
-Route::get('/finances/expenses/create', [\App\Http\Controllers\FinanceController::class, 'createExpense'])->name('finances.expenses.create');
-Route::post('/finances/expenses', [\App\Http\Controllers\FinanceController::class, 'storeExpense'])->name('finances.expenses.store');
-Route::get('/finances/expenses/{id}/edit', [\App\Http\Controllers\FinanceController::class, 'editExpense'])->name('finances.expenses.edit');
-Route::put('/finances/expenses/{id}', [\App\Http\Controllers\FinanceController::class, 'updateExpense'])->name('finances.expenses.update');
-Route::delete('/finances/expenses/{id}', [\App\Http\Controllers\FinanceController::class, 'destroyExpense'])->name('finances.expenses.destroy');
-Route::get('/finances/export-report', [\App\Http\Controllers\FinanceController::class, 'exportReport'])->name('finances.export');
-
-// Rutas de sucursales (branches)
-Route::resource('branches', BranchController::class);
-Route::post('/branches/set-active', [BranchController::class, 'setActive'])->name('branches.set-active');
-
-// Rutas de proveedores
-Route::resource('providers', ProvidersController::class);
+// ── Tienda pública — accesible sin autenticación ─────────────────────────────
+Route::prefix('tienda')->name('store.')->group(function () {
+    Route::get('/',              [StoreController::class, 'index'])->name('index');
+    Route::get('/producto/{id}', [StoreController::class, 'show'])->name('product');
+    Route::post('/orders',       [OrderController::class, 'store'])->name('orders.store');
+});

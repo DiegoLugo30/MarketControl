@@ -107,7 +107,7 @@
         <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 shadow-lg">
             <i class="fas fa-print"></i> Imprimir / Guardar PDF
         </button>
-        <a href="{{ env('APP_URL') }}/finances?month={{ $month }}&year={{ $year }}{{ isset($showingAllBranches) && $showingAllBranches ? '&branch_id=all' : (request('branch_id') ? '&branch_id='.request('branch_id') : '') }}"
+        <a href="{{ route('admin.finances.index') }}?month={{ $month }}&year={{ $year }}{{ isset($showingAllBranches) && $showingAllBranches ? '&branch_id=all' : (request('branch_id') ? '&branch_id='.request('branch_id') : '') }}"
            class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 shadow-lg">
             <i class="fas fa-arrow-left"></i> Volver
         </a>

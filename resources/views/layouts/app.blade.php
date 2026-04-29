@@ -58,28 +58,36 @@
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center py-4">
                 <div class="flex items-center space-x-4">
-                    <a href="{{ env('APP_URL') }}/" class="text-2xl font-bold">
+                    <a href="{{ route('admin.home') }}" class="text-2xl font-bold">
                     <i class="fas fa-cash-register"></i> Arima Store
                     </a>
                 </div>
                 <div class="flex space-x-4 items-center">
-                    <a href="{{ env('APP_URL') }}/" class="hover:bg-green-700 px-4 py-2 rounded transition">
+                    <a href="{{ route('admin.home') }}" class="hover:bg-green-700 px-4 py-2 rounded transition">
                     <i class="fas fa-shopping-cart"></i> Punto de Venta
                     </a>
-                    <a href="{{ env('APP_URL') }}/barcode/scan" class="hover:bg-green-700 px-4 py-2 rounded transition">
+                    <a href="{{ route('admin.barcode.scan') }}" class="hover:bg-green-700 px-4 py-2 rounded transition">
                         <i class="fas fa-barcode"></i> Escanear
                     </a>
-                    <a href="{{ env('APP_URL') }}/products" class="hover:bg-green-700 px-4 py-2 rounded transition">
+                    <a href="{{ route('admin.products.index') }}" class="hover:bg-green-700 px-4 py-2 rounded transition">
                     <i class="fas fa-box"></i> Productos
                     </a>
-                    <a href="{{ env('APP_URL') }}/sales" class="hover:bg-green-700 px-4 py-2 rounded transition">
+                    <a href="{{ route('admin.sales.index') }}" class="hover:bg-green-700 px-4 py-2 rounded transition">
                     <i class="fas fa-receipt"></i> Ventas
                     </a>
-                    <a href="{{ env('APP_URL') }}/providers" class="hover:bg-green-700 px-4 py-2 rounded transition">
+                    <a href="{{ route('admin.orders.index') }}" class="hover:bg-green-700 px-4 py-2 rounded transition">
+                        <i class="fas fa-shopping-bag"></i> Pedidos
+                    </a>
+                    <a href="{{ route('admin.providers.index') }}" class="hover:bg-green-700 px-4 py-2 rounded transition">
                         <i class="fas fa-truck-moving"></i> Proveedores
                     </a>
-                    <a href="{{ env('APP_URL') }}/finances" class="hover:bg-green-700 px-4 py-2 rounded transition">
+                    <a href="{{ route('admin.finances.index') }}" class="hover:bg-green-700 px-4 py-2 rounded transition">
                     <i class="fas fa-chart-line"></i> Finanzas
+                    </a>
+                    <a href="{{ route('store.index') }}"
+                       target="_blank"
+                       class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg transition flex items-center gap-1.5">
+                        <i class="fas fa-store text-sm"></i> Ver tienda
                     </a>
 
                     <!-- Divisor -->
@@ -87,6 +95,18 @@
 
                     <!-- Selector de Sucursal -->
                     @include('components.branch-selector')
+
+                    <!-- Divisor -->
+                    <div class="border-l border-green-500 h-8"></div>
+
+                    <!-- Sesión -->
+                    <span class="text-green-200 text-sm hidden lg:block">{{ auth()->user()->name ?? '' }}</span>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="hover:bg-green-700 px-3 py-2 rounded transition text-sm">
+                            <i class="fas fa-sign-out-alt"></i> Salir
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

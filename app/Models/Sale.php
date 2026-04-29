@@ -19,6 +19,10 @@ class Sale extends Model
         'discount_amount',
         'discount_description',
         'payment_method',
+        'order_code',
+        'customer_name',
+        'customer_email',
+        'order_comment',
     ];
 
     protected $casts = [

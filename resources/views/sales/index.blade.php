@@ -9,14 +9,14 @@
             <h1 class="text-3xl font-bold text-gray-800">
                 <i class="fas fa-receipt"></i> Historial de Ventas
             </h1>
-            <a href="{{ env('APP_URL') }}/" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">
+            <a href="{{ route('admin.home') }}" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">
             <i class="fas fa-plus"></i> Nueva Venta
             </a>
         </div>
 
         <!-- Filtros de Fecha y Botones de Exportación -->
         <div class="bg-gray-50 rounded-lg p-4 mb-6">
-            <form method="GET" action="{{ env('APP_URL') }}/sales/" class="space-y-4">
+            <form method="GET" action="{{ route('admin.sales.index') }}" class="space-y-4">
                 <!-- Filtros de Fecha -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
@@ -39,7 +39,7 @@
                         </button>
                     </div>
                     <div class="flex items-end">
-                        <a href="{{ env('APP_URL') }}/sales/" class="w-full bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition text-center">
+                        <a href="{{ route('admin.sales.index') }}" class="w-full bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition text-center">
                             <i class="fas fa-times"></i> Limpiar
                         </a>
                     </div>
@@ -128,7 +128,7 @@
                                     ${{ number_format($sale->total, 2) }}
                                 </td>
                                 <td class="px-4 py-3 text-center">
-                                    <a href="{{ env('APP_URL') }}/sales/{{ $sale->id }}/receipt/" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm">
+                                    <a href="{{ route('admin.sales.receipt', $sale->id) }}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm">
                                         <i class="fas fa-eye"></i> Ver Recibo
                                     </a>
                                 </td>
@@ -154,7 +154,7 @@
             <div class="text-center py-12 text-gray-500">
                 <i class="fas fa-receipt text-6xl mb-4 opacity-50"></i>
                 <p class="text-xl">No hay ventas registradas</p>
-                <a href="{{ env('APP_URL') }}" class="mt-4 inline-block bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+                <a href="{{ route('admin.home') }}" class="mt-4 inline-block bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
                     Realizar primera venta
                 </a>
             </div>
@@ -167,7 +167,7 @@ function exportReport(type) {
     const dateFrom = document.querySelector('input[name="date_from"]').value;
     const dateTo = document.querySelector('input[name="date_to"]').value;
 
-    let url = '{{ env('APP_URL') }}/sales/export?type=' + type;
+    let url = '{{ route('admin.sales.export') }}?type=' + type;
 
     if (type === 'custom') {
         if (dateFrom) url += '&date_from=' + dateFrom;

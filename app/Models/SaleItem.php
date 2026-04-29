@@ -65,12 +65,12 @@ class SaleItem extends Model
 
     /**
      * Subtotal before item-level discount.
-     * For weighted items the `price` column already stores the total (weight × rate).
+     * For weighted items `price` = price per kg; total = price × weight.
      */
     public function getSubtotalAttribute(): float
     {
         if ($this->weight) {
-            return (float) $this->price;
+            return (float) $this->price * (float) $this->weight;
         }
 
         return $this->quantity * (float) $this->price;

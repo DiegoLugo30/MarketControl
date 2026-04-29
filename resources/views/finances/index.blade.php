@@ -26,7 +26,7 @@
                 @endif
             </div>
             <div class="flex gap-3">
-                <a href="{{ env('APP_URL') }}/finances/expenses" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">
+                <a href="{{ route('admin.finances.expenses') }}" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">
                     <i class="fas fa-money-bill-wave"></i> Gestionar Gastos
                 </a>
                 <button onclick="downloadReport()" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
@@ -37,7 +37,7 @@
 
         <!-- Filtro de Mes/Año/Sucursal -->
         <div class="bg-gray-50 rounded-lg p-4 mb-6">
-            <form method="GET" action="{{ env('APP_URL') }}/finances" class="flex gap-4 items-end">
+            <form method="GET" action="{{ route('admin.finances.index') }}" class="flex gap-4 items-end">
                 <div class="flex-1">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-calendar"></i> Mes
@@ -352,7 +352,7 @@ function downloadReport() {
     const year = {{ $year }};
     const branchId = '{{ $filterBranchId ?? '' }}';
 
-    let url = '{{ env('APP_URL') }}/finances/export-report?month=' + month + '&year=' + year;
+    let url = '{{ route('admin.finances.export') }}?month=' + month + '&year=' + year;
     if (branchId) {
         url += '&branch_id=' + branchId;
     }

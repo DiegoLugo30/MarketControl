@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
@@ -46,11 +47,13 @@ class ProductController extends Controller
         $isWeighted = $request->input('is_weighted', false);
 
         $rules = [
-            'internal_code' => 'required|string|unique:products,internal_code',
-            'barcode' => 'nullable|string|unique:products,barcode',
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'is_weighted' => 'boolean',
+            'internal_code'    => 'required|string|unique:products,internal_code',
+            'barcode'          => 'nullable|string|unique:products,barcode',
+            'name'             => 'required|string|max:255',
+            'description'      => 'nullable|string',
+            'is_weighted'      => 'boolean',
+            'visible_in_store' => 'boolean',
+            'image'            => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ];
 
         $messages = [
@@ -87,6 +90,12 @@ class ProductController extends Controller
             $validated['price'] = 0;
         } else {
             $validated['price_per_kg'] = null;
+        }
+
+        // Manejar imagen
+        unset($validated['image']);
+        if ($request->hasFile('image')) {
+            $validated['image_path'] = $request->file('image')->store('products', 'public');
         }
 
         // Crear producto
@@ -142,9 +151,11 @@ class ProductController extends Controller
                 'string',
                 Rule::unique('products', 'barcode')->ignore($product->id),
             ],
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'is_weighted' => 'boolean',
+            'name'             => 'required|string|max:255',
+            'description'      => 'nullable|string',
+            'is_weighted'      => 'boolean',
+            'visible_in_store' => 'boolean',
+            'image'            => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ];
 
         $messages = [
@@ -183,6 +194,15 @@ class ProductController extends Controller
             $validated['price_per_kg'] = null;
         }
 
+        // Manejar imagen
+        unset($validated['image']);
+        if ($request->hasFile('image')) {
+            if ($product->image_path) {
+                Storage::disk('public')->delete($product->image_path);
+            }
+            $validated['image_path'] = $request->file('image')->store('products', 'public');
+        }
+
         $product->update($validated);
 
         // Actualizar stock en la sucursal activa (solo para productos no pesables)
@@ -211,7 +231,7 @@ class ProductController extends Controller
         }
 
         return redirect()
-            ->route('products.edit', $product)
+            ->route('admin.products.edit', $product)
             ->with('success', 'Producto actualizado exitosamente');
     }
 
@@ -221,13 +241,16 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         try {
+            if ($product->image_path) {
+                Storage::disk('public')->delete($product->image_path);
+            }
             $product->delete();
             return redirect()
-                ->route('products.index')
+                ->route('admin.products.index')
                 ->with('success', 'Producto eliminado exitosamente');
         } catch (\Exception $e) {
             return redirect()
-                ->route('products.index')
+                ->route('admin.products.index')
                 ->with('error', 'No se puede eliminar el producto porque tiene ventas asociadas');
         }
     }

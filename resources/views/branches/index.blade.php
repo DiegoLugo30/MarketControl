@@ -10,7 +10,7 @@
             <h1 class="text-3xl font-bold text-gray-800">
                 <i class="fas fa-building"></i> Gestión de Sucursales
             </h1>
-            <a href="{{ route('branches.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+            <a href="{{ route('admin.branches.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
                 <i class="fas fa-plus"></i> Nueva Sucursal
             </a>
         </div>
@@ -86,11 +86,11 @@
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <div class="flex justify-center space-x-2">
-                                    <a href="{{ route('branches.edit', $branch) }}" class="text-blue-600 hover:text-blue-800" title="Editar">
+                                    <a href="{{ route('admin.branches.edit', $branch) }}" class="text-blue-600 hover:text-blue-800" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     @if(!$branch->is_main)
-                                        <form action="{{ route('branches.destroy', $branch) }}" method="POST" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar esta sucursal?')">
+                                        <form action="{{ route('admin.branches.destroy', $branch) }}" method="POST" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar esta sucursal?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-red-600 hover:text-red-800" title="Eliminar">
