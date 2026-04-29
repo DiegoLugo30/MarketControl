@@ -21,7 +21,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        if (!app()->environment('local')) {
+        // Belt-and-suspenders: if APP_URL is https, force the scheme on every
+        // generated URL. This covers edge cases where the proxy headers are not
+        // yet available (e.g. console commands, queue workers).
+        if (str_starts_with(config('app.url'), 'https://')) {
             URL::forceScheme('https');
         }
 

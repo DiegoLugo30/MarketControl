@@ -82,12 +82,20 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
 // ── Diagnóstico (sin auth) ───────────────────────────────────────────────────
 Route::get('/test', function () {
+    $request = request();
     return response()->json([
-        'status'          => 'OK',
-        'message'         => 'El servidor está funcionando correctamente',
-        'timestamp'       => now()->toDateTimeString(),
-        'php_version'     => phpversion(),
-        'laravel_version' => app()->version(),
+        'status'              => 'OK',
+        'timestamp'           => now()->toDateTimeString(),
+        'php_version'         => phpversion(),
+        'laravel_version'     => app()->version(),
+        // HTTPS diagnostics — remove once confirmed working in production
+        'is_secure'           => $request->isSecure(),
+        'scheme'              => $request->getScheme(),
+        'x_forwarded_proto'   => $request->header('X-Forwarded-Proto'),
+        'x_forwarded_for'     => $request->header('X-Forwarded-For'),
+        'app_url'             => config('app.url'),
+        'app_env'             => config('app.env'),
+        'generated_route_url' => route('login'),
     ]);
 });
 
