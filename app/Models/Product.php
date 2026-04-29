@@ -15,12 +15,15 @@ class Product extends Model
         'price',
         'price_per_kg',
         'is_weighted',
+        'visible_in_store',
+        'image_path',
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
-        'price_per_kg' => 'decimal:2',
-        'is_weighted' => 'boolean',
+        'price'            => 'decimal:2',
+        'price_per_kg'     => 'decimal:2',
+        'is_weighted'      => 'boolean',
+        'visible_in_store' => 'boolean',
     ];
 
     // ========================================

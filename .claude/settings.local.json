@@ -6,7 +6,8 @@
       "Bash(php artisan:*)",
       "Bash(del /F /Q \"\\\\?\\\\%CD%\\\\nul\")",
       "Bash(powershell -Command \"Remove-Item -Path ''\\\\?$PWD\\\\nul'' -Force -ErrorAction SilentlyContinue\")",
-      "Bash(powershell -Command \"Remove-Item -Path ''\\\\?$PWD\\\\nul'' -Force\")"
+      "Bash(powershell -Command \"Remove-Item -Path ''\\\\?$PWD\\\\nul'' -Force\")",
+      "Bash(docker exec pos-barcode-app *)"
     ]
   }
 }

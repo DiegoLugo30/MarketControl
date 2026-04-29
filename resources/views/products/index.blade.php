@@ -9,14 +9,14 @@
             <h1 class="text-3xl font-bold text-gray-800">
                 <i class="fas fa-box"></i> Productos
             </h1>
-            <a href="{{ route('products.create') }}" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">
+            <a href="{{ route('admin.products.create') }}" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">
                 <i class="fas fa-plus"></i> Nuevo Producto
             </a>
         </div>
 
         <!-- Buscador -->
         <div class="mb-6">
-            <form action="{{ env('APP_URL') }}/products/" method="GET" class="flex gap-3">
+            <form action="{{ route('admin.products.index') }}" method="GET" class="flex gap-3">
                 <div class="flex-1 relative">
                     <input
                         type="text"
@@ -31,7 +31,7 @@
                     <i class="fas fa-search"></i> Buscar
                 </button>
                 @if($search)
-                    <a href="{{ env('APP_URL') }}/products/" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition">
+                    <a href="{{ route('admin.products.index') }}" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition">
                         <i class="fas fa-times"></i> Limpiar
                     </a>
                 @endif
@@ -44,7 +44,7 @@
                 <i class="fas fa-search text-6xl mb-4"></i>
                 <p class="text-xl mb-2">No se encontraron productos</p>
                 <p class="text-gray-400 mb-4">No hay productos que coincidan con "{{ $search }}"</p>
-                <a href="{{ env('APP_URL') }}/products/" class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                <a href="{{ route('admin.products.index') }}" class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
                     Ver todos los productos
                 </a>
             </div>
@@ -107,10 +107,10 @@
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <div class="flex justify-center space-x-2">
-                                        <a href="{{ route('products.edit', $product) }}" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm">
+                                        <a href="{{ route('admin.products.edit', $product) }}" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <form action="{{ env('APP_URL') }}/products/{{ $product->id }}" method="POST" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar este producto?')">
+                                        <form action="{{ route('admin.products.destroy', $product) }}" method="POST" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar este producto?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">
@@ -132,7 +132,7 @@
             <div class="text-center py-12 text-gray-500">
                 <i class="fas fa-box-open text-6xl mb-4"></i>
                 <p class="text-xl">No hay productos registrados</p>
-                <a href="{{ env('APP_URL') }}/products/create" class="mt-4 inline-block bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+                <a href="{{ route('admin.products.create') }}" class="mt-4 inline-block bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
                 Crear primer producto
                 </a>
             </div>
@@ -163,7 +163,7 @@ $(document).ready(function() {
     searchInput.on('keydown', function(e) {
         if (e.key === 'Escape') {
             $(this).val('');
-            window.location.href = '{{ env('APP_URL') }}/products/';
+            window.location.href = '{{ route('admin.products.index') }}';
         }
     });
 

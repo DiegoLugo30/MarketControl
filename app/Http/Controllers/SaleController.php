@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -13,9 +14,42 @@ class SaleController extends Controller
     /**
      * Vista del punto de venta (POS)
      */
-    public function pos()
+    public function pos(Request $request)
     {
-        return view('sales.pos');
+        $order = null;
+        $orderData = null;
+
+        if ($code = $request->query('order')) {
+            $order = Order::with('items.product')
+                ->where('code', $code)
+                ->where('status', 'pending')
+                ->first();
+
+            abort_if(!$order, 404, 'Pedido no encontrado o ya procesado.');
+
+            // 🔥 ARMAR DATA PARA FRONTEND (CLAVE)
+            $orderData = [
+                'code' => $order->code,
+                'comment' => $order->comment,
+                'items' => $order->items->map(function ($i) {
+                    return [
+                        'product_id' => $i->product_id,
+                        'name' => $i->product_name,
+                        'price' => (float) $i->price,
+                        'quantity' => (float) $i->quantity,
+                        'unit_type' => $i->unit_type,
+                        'is_weighted' => $i->unit_type === 'weight',
+                        'weight' => $i->unit_type === 'weight' ? (float) $i->quantity : null,
+                        'stock' => $i->product
+                            ? $i->product->getTotalStockAttribute()
+                            : 0,
+                        'item_discount' => 0,
+                    ];
+                })->values()->all(),
+            ];
+        }
+
+        return view('sales.pos', compact('order', 'orderData'));
     }
 
     /**
@@ -42,6 +76,7 @@ class SaleController extends Controller
             'discount_amount'          => 'nullable|numeric|min:0',
             'discount_description'     => 'nullable|string|max:255',
             'payment_method'           => 'required|in:efectivo,debito,transferencia,cuenta_dni,rappi',
+            'order_code'               => 'nullable|string',
         ]);
 
         // ── Per-item business-rule validation ────────────────────────────────
@@ -92,6 +127,15 @@ class SaleController extends Controller
         }
         // ─────────────────────────────────────────────────────────────────────
 
+        // Resolve the store order (if any) before opening the DB transaction
+        $linkedOrder = null;
+        if (!empty($validated['order_code'])) {
+            $linkedOrder = Order::with('user')
+                ->where('code', $validated['order_code'])
+                ->where('status', 'pending')
+                ->first();
+        }
+
         try {
             DB::beginTransaction();
 
@@ -139,6 +183,10 @@ class SaleController extends Controller
                 'discount_description' => $validated['discount_description'] ?? null,
                 'payment_method'       => $validated['payment_method'],
                 'created_at'           => now(),
+                'order_code'           => $linkedOrder?->code,
+                'customer_name'        => $linkedOrder?->user?->name ?? ($linkedOrder ? 'Invitado' : null),
+                'customer_email'       => $linkedOrder?->user?->email,
+                'order_comment'        => $linkedOrder?->comment,
             ]);
 
             // ── Create sale items ─────────────────────────────────────────────
@@ -192,6 +240,11 @@ class SaleController extends Controller
 
             DB::commit();
 
+            // Mark the originating store order as completed
+            if ($linkedOrder) {
+                $linkedOrder->update(['status' => 'completed']);
+            }
+
             return response()->json([
                 'success' => true,
                 'sale_id' => $sale->id,
@@ -209,12 +262,21 @@ class SaleController extends Controller
     }
 
     /**
-     * Ver recibo de venta
+     * Ver recibo de venta (admin — detalle completo)
      */
     public function receipt($id)
     {
         $sale = Sale::with('items.product')->findOrFail($id);
         return view('sales.receipt', compact('sale'));
+    }
+
+    /**
+     * Ticket imprimible para el cliente (sin datos internos)
+     */
+    public function receiptPrint($id)
+    {
+        $sale = Sale::with('items.product')->findOrFail($id);
+        return view('sales.receipt_print', compact('sale'));
     }
 
     /**
@@ -393,10 +455,7 @@ class SaleController extends Controller
 
                     // Unit price (always derivable from snapshot data)
                     if ($item->isWeighted()) {
-                        $weightKg      = (float) $item->weight;
-                        $pricePerUnit  = $weightKg > 0
-                            ? '$' . number_format((float) $item->price / $weightKg, 2) . '/kg'
-                            : '$' . number_format((float) $item->price, 2);
+                        $pricePerUnit = '$' . number_format((float) $item->price, 2) . '/kg';
                     } else {
                         $pricePerUnit = '$' . number_format((float) $item->price, 2);
                     }

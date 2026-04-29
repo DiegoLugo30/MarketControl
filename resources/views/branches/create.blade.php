@@ -11,7 +11,7 @@
             </h1>
         </div>
 
-        <form action="{{ route('branches.store') }}" method="POST">
+        <form action="{{ route('admin.branches.store') }}" method="POST">
             @csrf
 
             <!-- Código -->
@@ -125,7 +125,7 @@
 
             <!-- Botones -->
             <div class="flex justify-end space-x-3">
-                <a href="{{ route('branches.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
+                <a href="{{ route('admin.branches.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
                     <i class="fas fa-times"></i> Cancelar
                 </a>
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">

@@ -20,7 +20,10 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
-                return redirect('/');
+                $user = Auth::guard($guard)->user();
+                return redirect(
+                    $user->isAdmin() ? route('admin.home') : route('store.index')
+                );
             }
         }
 

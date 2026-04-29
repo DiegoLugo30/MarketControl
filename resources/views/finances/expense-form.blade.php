@@ -11,7 +11,7 @@
                 <i class="fas fa-{{ isset($expense) ? 'edit' : 'plus-circle' }}"></i>
                 {{ isset($expense) ? 'Editar Gasto' : 'Nuevo Gasto' }}
             </h1>
-            <a href="{{ env('APP_URL') }}/finances/expenses" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition">
+            <a href="{{ route('admin.finances.expenses') }}" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
         </div>
@@ -29,7 +29,7 @@
         @endif
 
         <!-- Formulario -->
-        <form method="POST" action="{{ isset($expense) ? env('APP_URL') . '/finances/expenses/' . $expense->id : env('APP_URL') . '/finances/expenses' }}">
+        <form method="POST" action="{{ isset($expense) ? route('admin.finances.expenses.update', $expense->id) : route('admin.finances.expenses.store') }}">
             @csrf
             @if(isset($expense))
                 @method('PUT')
@@ -126,7 +126,7 @@
                 <button type="submit" class="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition font-semibold">
                     <i class="fas fa-save"></i> {{ isset($expense) ? 'Actualizar Gasto' : 'Guardar Gasto' }}
                 </button>
-                <a href="{{ env('APP_URL') }}/finances/expenses" class="flex-1 bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition font-semibold text-center">
+                <a href="{{ route('admin.finances.expenses') }}" class="flex-1 bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition font-semibold text-center">
                     <i class="fas fa-times"></i> Cancelar
                 </a>
             </div>

@@ -109,7 +109,7 @@
                         El producto se encontró en la base de datos externa. <strong>Puedes modificar todos los campos</strong> antes de guardarlo.
                     </p>
                 </div>
-                <form id="form-api-create" action="{{ env('APP_URL') }}/products" method="POST">
+                <form id="form-api-create" action="{{ route('admin.products.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="barcode" id="api-barcode">
                     <input type="hidden" name="internal_code" id="api-internal-code">
@@ -199,7 +199,7 @@
                 <p class="text-gray-700 mb-4">
                     El código <strong id="notfound-barcode"></strong> no existe en la base de datos ni en fuentes externas.
                 </p>
-                <form id="form-manual-create" action="{{ env('APP_URL') }}/products" method="POST">
+                <form id="form-manual-create" action="{{ route('admin.products.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="barcode" id="manual-barcode">
                     <input type="hidden" name="internal_code" id="manual-internal-code">
@@ -326,7 +326,7 @@ $(document).ready(function() {
 
     // Buscar código de barras
     function searchBarcode(barcode) {
-        const url = '{{ env('APP_URL') }}/barcode/search';
+        const url = '{{ route('admin.barcode.search') }}';
 
         console.log('🔍 Iniciando búsqueda de código:', barcode);
         console.log('📋 CSRF Token:', $('meta[name="csrf-token"]').attr('content'));
@@ -429,7 +429,7 @@ $(document).ready(function() {
         $('#found-price').text('$' + parseFloat(price).toFixed(2));
         $('#found-stock').text(product.stock + ' unidades');
         $('#found-description').text(product.description || 'Sin descripción');
-        $('#btn-edit').attr('href', '/products/' + product.id + '/edit');
+        $('#btn-edit').attr('href', '{{ url('admin/products') }}/' + product.id + '/edit');
         $('#result-found').removeClass('hidden');
     }
 

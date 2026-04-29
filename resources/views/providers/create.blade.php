@@ -11,7 +11,7 @@
             </h1>
         </div>
 
-        <form action="{{ env('APP_URL') }}/providers" method="POST">
+        <form action="{{ route('admin.providers.store') }}" method="POST">
             @csrf
 
             <!-- Nombre -->
@@ -101,7 +101,7 @@
 
             <!-- Botones -->
             <div class="flex justify-end space-x-3">
-                <a href="{{ route('providers.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
+                <a href="{{ route('admin.providers.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
                     <i class="fas fa-times"></i> Cancelar
                 </a>
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">

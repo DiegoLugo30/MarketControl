@@ -94,7 +94,7 @@ class FinanceController extends Controller
                                             ->get();
             } else {
                 // Sucursal no encontrada, usar datos de sucursal activa
-                return redirect()->route('finances.index', ['month' => $month, 'year' => $year]);
+                return redirect()->route('admin.finances.index', ['month' => $month, 'year' => $year]);
             }
 
         } else {
@@ -225,7 +225,7 @@ class FinanceController extends Controller
 
         Expense::create($validated);
 
-        return redirect()->route('finances.expenses')
+        return redirect()->route('admin.finances.expenses')
                         ->with('success', 'Gasto registrado exitosamente');
     }
 
@@ -255,7 +255,7 @@ class FinanceController extends Controller
 
         $expense->update($validated);
 
-        return redirect()->route('finances.expenses')
+        return redirect()->route('admin.finances.expenses')
                         ->with('success', 'Gasto actualizado exitosamente');
     }
 
@@ -267,7 +267,7 @@ class FinanceController extends Controller
         $expense = Expense::findOrFail($id);
         $expense->delete();
 
-        return redirect()->route('finances.expenses')
+        return redirect()->route('admin.finances.expenses')
                         ->with('success', 'Gasto eliminado exitosamente');
     }
 

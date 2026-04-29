@@ -3,6 +3,39 @@
 @section('title', 'Punto de Venta')
 
 @section('content')
+
+{{-- Order info banner (only when POS was opened via ?order=ORD-XXXXXX) --}}
+@if($order ?? null)
+<div class="max-w-6xl mx-auto mb-4">
+    <div class="bg-amber-50 border border-amber-300 rounded-lg px-5 py-3 flex items-start gap-3">
+        <i class="fas fa-shopping-bag text-amber-500 mt-0.5 text-lg"></i>
+        <div class="flex-1">
+            <p class="font-bold text-amber-800">
+                Pedido <span class="font-mono tracking-wide">{{ $order->code }}</span> cargado
+            </p>
+            @if($order->comment)
+                <p class="text-sm text-amber-700 mt-0.5">
+                    <i class="fas fa-comment-alt text-amber-400 mr-1"></i>{{ $order->comment }}
+                </p>
+            @endif
+            <p class="text-xs text-amber-600 mt-1">
+                {{ $order->items->count() }} producto(s) pre-cargados en el carrito.
+                Revisá los precios antes de finalizar.
+            </p>
+        </div>
+        <form method="POST" action="{{ route('admin.orders.cancel', $order->code) }}"
+              onsubmit="return confirm('¿Cancelar el pedido {{ $order->code }}? Esta acción no se puede deshacer.')">
+            @csrf
+            <button type="submit"
+                    class="shrink-0 flex items-center gap-1.5 bg-red-100 hover:bg-red-200 text-red-700
+                           px-3 py-1.5 rounded-lg text-sm font-semibold transition">
+                <i class="fas fa-times-circle text-xs"></i> Cancelar pedido
+            </button>
+        </form>
+    </div>
+</div>
+@endif
+
 <div class="max-w-6xl mx-auto">
     <div class="bg-white rounded-lg shadow-lg p-6">
         <h1 class="text-3xl font-bold mb-6 text-gray-800">
@@ -325,8 +358,12 @@
             <h2 class="text-2xl font-bold mb-2">Venta Completada</h2>
             <p class="text-gray-600 mb-6">La venta se ha registrado exitosamente</p>
             <div class="space-y-3">
+                <a id="btn-print-ticket" href="#" target="_blank"
+                   class="block w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
+                    <i class="fas fa-ticket-alt"></i> Imprimir ticket cliente
+                </a>
                 <a id="btn-view-receipt" href="#" class="block w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-                    <i class="fas fa-receipt"></i> Ver Recibo
+                    <i class="fas fa-receipt"></i> Ver Recibo (admin)
                 </a>
                 <button id="btn-new-sale" class="w-full bg-gray-600 text-white py-2 rounded hover:bg-gray-700">
                     <i class="fas fa-plus"></i> Nueva Venta
@@ -338,6 +375,9 @@
 @endsection
 
 @push('scripts')
+    <script>
+        window.initialOrder = @json($orderData);
+    </script>
 <script>
 $(document).ready(function() {
     // ========================================
@@ -442,6 +482,14 @@ $(document).ready(function() {
     // Cargar carrito guardado al iniciar
     loadCartFromStorage();
 
+    // Pre-load cart from store order (overrides any saved cart)
+    if (window.initialOrder && window.initialOrder.items && window.initialOrder.items.length > 0) {
+        cart = window.initialOrder.items;
+        clearCartStorage(); // Don't persist the order-loaded cart to avoid accidental reloads
+        renderCart();
+        console.log('✅ [POS] Pedido cargado:', window.initialOrder.code, cart.length, 'items');
+    }
+
     // Auto-focus en el input de código de barras
     function focusBarcodeInput() {
         $('#pos-barcode-input').focus();
@@ -461,7 +509,7 @@ $(document).ready(function() {
     // Buscar producto y agregarlo al carrito o pedir peso
     function searchAndAddProduct(code) {
         // Forzar HTTPS en la URL
-        let url = '{{ env('APP_URL') }}/barcode/search';
+        let url = '{{ route('admin.barcode.search') }}';
 
         console.log('🔍 [POS] Buscando código:', code);
         console.log('📋 [POS] CSRF Token:', $('meta[name="csrf-token"]').attr('content'));
@@ -654,15 +702,14 @@ $(document).ready(function() {
         const totalPrice = weight * pricePerKg;
 
         if (editingCartIndex !== null) {
-            // Modo edición - actualizar item existente
+            // Modo edición - solo actualizar el peso; price (per kg) no cambia
             cart[editingCartIndex].weight = weight;
-            cart[editingCartIndex].price = totalPrice;
             saveCartToStorage();
             renderCart();
             showAlert('Peso actualizado correctamente', 'success');
         } else {
             // Modo agregar - agregar nuevo item
-            addWeightedToCart(pendingWeightedProduct, weight, totalPrice);
+            addWeightedToCart(pendingWeightedProduct, weight);
         }
 
         closeWeightModal();
@@ -716,12 +763,12 @@ $(document).ready(function() {
     }
 
     // Agregar producto pesable al carrito
-    function addWeightedToCart(product, weight, totalPrice) {
-        // Los productos pesables NO se acumulan - cada peso es un item separado
+    function addWeightedToCart(product, weight) {
+        // price = price per kg; total = price * weight (calculated dynamically)
         cart.push({
             product_id: product.id,
             name: product.name,
-            price: totalPrice,
+            price: product.price_per_kg,
             quantity: 1,
             stock: 0,
             is_weighted: true,
@@ -745,7 +792,7 @@ $(document).ready(function() {
             $('#cart-items .cart-item').remove();
 
             cart.forEach((item, index) => {
-                const subtotal = item.is_weighted ? item.price : (item.quantity * item.price);
+                const subtotal = item.is_weighted ? (item.price * item.weight) : (item.quantity * item.price);
                 const itemDiscountPercent = item.item_discount || 0;
                 const itemDiscountAmount = (subtotal * itemDiscountPercent / 100);
                 const totalWithDiscount = subtotal - itemDiscountAmount;
@@ -848,7 +895,7 @@ $(document).ready(function() {
 
             // Actualizar solo el total del item específico sin re-renderizar todo
             const item = cart[index];
-            const itemSubtotal = item.is_weighted ? item.price : (item.quantity * item.price);
+            const itemSubtotal = item.is_weighted ? (item.price * item.weight) : (item.quantity * item.price);
             const itemDiscountAmount = (itemSubtotal * discountPercent / 100);
             const totalWithDiscount = itemSubtotal - itemDiscountAmount;
 
@@ -897,11 +944,11 @@ $(document).ready(function() {
         const item = cart[index];
         if (!item.is_weighted) return;
 
-        // Crear objeto de producto con los datos necesarios para el modal
+        // price ya es price_per_kg — no necesita derivarse
         const product = {
             id: item.product_id,
             name: item.name,
-            price_per_kg: item.price / item.weight // Calcular precio por kg desde el total
+            price_per_kg: item.price
         };
 
         showWeightModal(product, index);
@@ -916,7 +963,7 @@ $(document).ready(function() {
 
         // Calcular subtotal (después de descuentos individuales)
         const subtotal = cart.reduce((sum, item) => {
-            const itemSubtotal = item.is_weighted ? item.price : (item.quantity * item.price);
+            const itemSubtotal = item.is_weighted ? (item.price * item.weight) : (item.quantity * item.price);
             const itemDiscountPercent = item.item_discount || 0;
             const itemDiscountAmount = (itemSubtotal * itemDiscountPercent / 100);
             return sum + itemSubtotal - itemDiscountAmount;
@@ -964,7 +1011,7 @@ $(document).ready(function() {
 
         // Calcular subtotal con descuentos de items (convertir porcentajes a montos)
         const subtotal = cart.reduce((sum, item) => {
-            const itemSubtotal = item.is_weighted ? item.price : (item.quantity * item.price);
+            const itemSubtotal = item.is_weighted ? (item.price * item.weight) : (item.quantity * item.price);
             const itemDiscountPercent = item.item_discount || 0;
             const itemDiscountAmount = (itemSubtotal * itemDiscountPercent / 100);
             return sum + itemSubtotal - itemDiscountAmount;
@@ -977,7 +1024,7 @@ $(document).ready(function() {
 
         const saleData = {
             items: cart.map(item => {
-                const itemSubtotal = item.is_weighted ? item.price : (item.quantity * item.price);
+                const itemSubtotal = item.is_weighted ? (item.price * item.weight) : (item.quantity * item.price);
                 const itemDiscountPercent = item.item_discount || 0;
                 const itemDiscountAmount = (itemSubtotal * itemDiscountPercent / 100);
 
@@ -995,16 +1042,20 @@ $(document).ready(function() {
             total: totalAmount.toFixed(2),
             discount_amount: totalDiscountAmount.toFixed(2),
             discount_description: totalDiscountPercent > 0 ? `Descuento ${totalDiscountPercent}% aplicado en punto de venta` : null,
-            payment_method: $('#payment-method').val()
+            payment_method: $('#payment-method').val(),
+            order_code: (window.initialOrder && window.initialOrder.code) ? window.initialOrder.code : null,
         };
 
-        const url = '{{ env('APP_URL') }}/sales/complete';
+        const url = '{{ route('admin.sales.complete') }}';
 
         $.post(url, saleData)
             .done(function(response) {
                 if (response.success) {
                     clearCartStorage(); // Limpiar storage al completar venta exitosamente
-                    $('#btn-view-receipt').attr('href', '/sales/' + response.sale_id + '/receipt');
+                    window.initialOrder = null; // Unlink the store order so it won't be reused
+                    const baseUrl = '{{ url('admin/sales') }}/' + response.sale_id;
+                    $('#btn-view-receipt').attr('href', baseUrl + '/receipt');
+                    $('#btn-print-ticket').attr('href', baseUrl + '/receipt-print');
                     $('#sale-modal').removeClass('hidden');
                 } else {
                     alert(response.message || 'Error al procesar la venta');
@@ -1016,15 +1067,10 @@ $(document).ready(function() {
             });
     });
 
-    // Nueva venta
+    // Nueva venta — redirect to clean POS URL (strips ?order= param if present)
     $('#btn-new-sale').click(function() {
-        $('#sale-modal').addClass('hidden');
-        cart = [];
-        $('#total-discount-input').val(0);
-        $('#payment-method').val('efectivo'); // Resetear método de pago
-        clearCartStorage(); // Limpiar storage al iniciar nueva venta
-        renderCart();
-        focusBarcodeInput();
+        clearCartStorage();
+        window.location.href = '{{ route('admin.pos') }}';
     });
 
     // Mantener foco en el input
@@ -1218,7 +1264,7 @@ $(document).ready(function() {
             cart.push({
                 product_id:   null,
                 name:         name,
-                price:        totalPrice,
+                price:        pricePerKg,
                 quantity:     1,
                 stock:        0,
                 is_weighted:  true,

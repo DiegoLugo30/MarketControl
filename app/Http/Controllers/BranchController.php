@@ -52,7 +52,7 @@ class BranchController extends Controller
 
         Branch::create($validated);
 
-        return redirect()->route('branches.index')
+        return redirect()->route('admin.branches.index')
             ->with('success', 'Sucursal creada exitosamente');
     }
 
@@ -88,7 +88,7 @@ class BranchController extends Controller
 
         $branch->update($validated);
 
-        return redirect()->route('branches.index')
+        return redirect()->route('admin.branches.index')
             ->with('success', 'Sucursal actualizada exitosamente');
     }
 
@@ -99,7 +99,7 @@ class BranchController extends Controller
     {
         // Validar que no sea la sucursal principal
         if ($branch->is_main) {
-            return redirect()->route('branches.index')
+            return redirect()->route('admin.branches.index')
                 ->with('error', 'No se puede eliminar la sucursal principal');
         }
 
@@ -109,13 +109,13 @@ class BranchController extends Controller
         $hasStock = $branch->productStocks()->where('stock', '>', 0)->exists();
 
         if ($hasSales || $hasExpenses || $hasStock) {
-            return redirect()->route('branches.index')
+            return redirect()->route('admin.branches.index')
                 ->with('error', 'No se puede eliminar la sucursal porque tiene ventas, gastos o stock asociado');
         }
 
         $branch->delete();
 
-        return redirect()->route('branches.index')
+        return redirect()->route('admin.branches.index')
             ->with('success', 'Sucursal eliminada exitosamente');
     }
 

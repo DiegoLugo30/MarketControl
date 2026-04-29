@@ -48,7 +48,7 @@ class ProvidersController extends Controller
         Provider::create($validated);
 
         return redirect()
-            ->route('providers.index')
+            ->route('admin.providers.index')
             ->with('success', 'Proveedor creado exitosamente');
     }
 
@@ -84,7 +84,7 @@ class ProvidersController extends Controller
         $provider->update($validated);
 
         return redirect()
-            ->route('providers.index', $provider)
+            ->route('admin.providers.index')
             ->with('success', 'Proveedor actualizado exitosamente');
     }
 
@@ -96,11 +96,11 @@ class ProvidersController extends Controller
         try {
             $provider->delete();
             return redirect()
-                ->route('providers.index')
+                ->route('admin.providers.index')
                 ->with('success', 'Proveedor eliminado exitosamente');
         } catch (\Exception $e) {
             return redirect()
-                ->route('providers.index')
+                ->route('admin.providers.index')
                 ->with('error', 'No se puede eliminar el Proveedor');
         }
     }

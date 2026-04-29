@@ -98,9 +98,7 @@
                                     @php
                                         $pricePerKg = $item->product
                                             ? $item->product->price_per_kg
-                                            : ((float)$item->weight > 0
-                                                ? (float)$item->price / (float)$item->weight
-                                                : (float)$item->price);
+                                            : (float)$item->price;
                                     @endphp
                                     ${{ number_format($pricePerKg, 2) }}<span class="text-xs text-gray-500">/kg</span>
                                 @else
@@ -168,6 +166,29 @@
             </div>
         </div>
 
+        <!-- Info del pedido online (si aplica) -->
+        @if($sale->order_code)
+        <div class="border-t border-gray-200 pt-4 mb-6">
+            <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3">
+                <i class="fas fa-shopping-bag mr-1"></i> Pedido Online
+            </h2>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-1 text-sm">
+                <p><span class="font-semibold text-gray-600">Código:</span>
+                   <span class="font-mono font-bold text-amber-800">{{ $sale->order_code }}</span></p>
+                <p><span class="font-semibold text-gray-600">Cliente:</span>
+                   {{ $sale->customer_name }}</p>
+                @if($sale->customer_email)
+                    <p><span class="font-semibold text-gray-600">Email:</span>
+                       {{ $sale->customer_email }}</p>
+                @endif
+                @if($sale->order_comment)
+                    <p><span class="font-semibold text-gray-600">Comentario:</span>
+                       <span class="italic text-gray-700">{{ $sale->order_comment }}</span></p>
+                @endif
+            </div>
+        </div>
+        @endif
+
         <!-- Pie del recibo -->
         <div class="text-center text-gray-500 text-sm border-t border-gray-300 pt-6">
             <p class="mb-2">Gracias por su compra</p>
@@ -175,14 +196,18 @@
         </div>
 
         <!-- Acciones -->
-        <div class="flex justify-center space-x-4 mt-8">
+        <div class="flex flex-wrap justify-center gap-3 mt-8">
+            <a href="{{ route('admin.sales.receipt.print', $sale->id) }}" target="_blank"
+               class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700">
+                <i class="fas fa-ticket-alt"></i> Imprimir ticket cliente
+            </a>
             <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-                <i class="fas fa-print"></i> Imprimir
+                <i class="fas fa-print"></i> Imprimir vista admin
             </button>
-            <a href="{{ env('APP_URL') }}/" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+            <a href="{{ route('admin.home') }}" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
                 <i class="fas fa-cash-register"></i> Nueva Venta
             </a>
-            <a href="{{ env('APP_URL') }}/sales" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700">
+            <a href="{{ route('admin.sales.index') }}" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700">
                 <i class="fas fa-list"></i> Ver Ventas
             </a>
         </div>

@@ -11,10 +11,10 @@
                 <i class="fas fa-money-bill-wave"></i> Gestión de Gastos
             </h1>
             <div class="flex gap-3">
-                <a href="{{ env('APP_URL') }}/finances" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                <a href="{{ route('admin.finances.index') }}" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
                     <i class="fas fa-chart-line"></i> Dashboard
                 </a>
-                <a href="{{ env('APP_URL') }}/finances/expenses/create" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">
+                <a href="{{ route('admin.finances.expenses.create') }}" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition">
                     <i class="fas fa-plus"></i> Nuevo Gasto
                 </a>
             </div>
@@ -29,7 +29,7 @@
 
         <!-- Filtros -->
         <div class="bg-gray-50 rounded-lg p-4 mb-6">
-            <form method="GET" action="{{ env('APP_URL') }}/finances/expenses" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <form method="GET" action="{{ route('admin.finances.expenses') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-calendar"></i> Mes
@@ -71,7 +71,7 @@
                     </button>
                 </div>
                 <div class="flex items-end">
-                    <a href="{{ env('APP_URL') }}/finances/expenses" class="w-full bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition text-center">
+                    <a href="{{ route('admin.finances.expenses') }}" class="w-full bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition text-center">
                         <i class="fas fa-times"></i> Limpiar
                     </a>
                 </div>
@@ -118,11 +118,11 @@
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <div class="flex gap-2 justify-center">
-                                        <a href="{{ env('APP_URL') }}/finances/expenses/{{ $expense->id }}/edit"
+                                        <a href="{{ route('admin.finances.expenses.edit', $expense->id) }}"
                                            class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-sm">
                                             <i class="fas fa-edit"></i> Editar
                                         </a>
-                                        <form method="POST" action="{{ env('APP_URL') }}/finances/expenses/{{ $expense->id }}"
+                                        <form method="POST" action="{{ route('admin.finances.expenses.destroy', $expense->id) }}"
                                               onsubmit="return confirm('¿Está seguro de eliminar este gasto?');"
                                               class="inline">
                                             @csrf
@@ -155,7 +155,7 @@
             <div class="text-center py-12 text-gray-500">
                 <i class="fas fa-inbox text-6xl mb-4 opacity-50"></i>
                 <p class="text-xl">No hay gastos registrados</p>
-                <a href="{{ env('APP_URL') }}/finances/expenses/create" class="mt-4 inline-block bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+                <a href="{{ route('admin.finances.expenses.create') }}" class="mt-4 inline-block bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
                     Registrar primer gasto
                 </a>
             </div>

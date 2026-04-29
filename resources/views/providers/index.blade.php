@@ -10,7 +10,7 @@
             <h1 class="text-3xl font-bold text-gray-800">
                 <i class="fas fa-truck-moving"></i> Gestión de Proveedores
             </h1>
-            <a href="{{ route('providers.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+            <a href="{{ route('admin.providers.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
                 <i class="fas fa-plus"></i> Nuevo Proveedor
             </a>
         </div>
@@ -55,10 +55,10 @@
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <div class="flex justify-center space-x-2">
-                                    <a href="{{ env('APP_URL') }}/providers/{{ $provider->id }}/edit" class="text-blue-600 hover:text-blue-800" title="Editar">
+                                    <a href="{{ route('admin.providers.edit', $provider) }}" class="text-blue-600 hover:text-blue-800" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ env('APP_URL') }}/providers/{{ $provider->id }}" method="POST" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar este proveedor?')">
+                                    <form action="{{ route('admin.providers.destroy', $provider) }}" method="POST" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar este proveedor?')">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 hover:text-red-800" title="Eliminar">
