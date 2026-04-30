@@ -230,6 +230,7 @@
                         '_blank'
                     );
                     this.comment = '';
+                    this.clear();
                 },
             });
         });
@@ -299,7 +300,7 @@
                 </div>
             </form>
 
-            {{-- Auth section --}}
+            {{-- Auth section (desktop) --}}
             <div class="hidden sm:flex items-center gap-2 shrink-0">
                 @auth
                     <span class="text-sm text-gray-500 hidden lg:block truncate max-w-[120px]">
@@ -314,6 +315,12 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
                             Admin
+                        </a>
+                    @else
+                        <a href="{{ route('store.account.orders') }}"
+                           class="text-xs font-medium text-gray-500 hover:text-gray-700 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition flex items-center gap-1">
+                            <i class="fas fa-clipboard-list text-[11px]"></i>
+                            Mis pedidos
                         </a>
                     @endif
                     <form method="POST" action="{{ route('logout') }}">
@@ -357,8 +364,8 @@
         </div>
     </div>
 
-    {{-- Search bar (mobile) --}}
-    <div class="md:hidden border-t border-gray-100 px-4 pb-3 pt-2">
+    {{-- Search bar + auth (mobile) --}}
+    <div class="md:hidden border-t border-gray-100 px-4 pb-3 pt-2 space-y-2">
         <form method="GET" action="{{ route('store.index') }}">
             <div class="relative">
                 <input
@@ -374,6 +381,41 @@
                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
             </div>
         </form>
+
+        {{-- Mobile auth links --}}
+        @guest
+            <div class="flex items-center justify-end gap-2 pt-0.5">
+                <a href="{{ route('login') }}"
+                   class="text-sm font-medium text-gray-600 hover:text-gray-900 transition">
+                    Ingresar
+                </a>
+                <a href="{{ route('register') }}"
+                   class="text-sm font-semibold bg-brand-500 hover:bg-brand-600 text-white px-3.5 py-1.5 rounded-full transition shadow-sm">
+                    Registrarse
+                </a>
+            </div>
+        @endguest
+        @auth
+            <div class="flex items-center justify-between pt-0.5">
+                <span class="text-sm text-gray-500 truncate max-w-[150px]">{{ auth()->user()->name }}</span>
+                <div class="flex items-center gap-1">
+                    @if(!auth()->user()->isAdmin())
+                        <a href="{{ route('store.account.orders') }}"
+                           class="text-xs font-medium text-gray-500 hover:text-gray-700 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition flex items-center gap-1">
+                            <i class="fas fa-clipboard-list text-[11px]"></i>
+                            Mis pedidos
+                        </a>
+                    @endif
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit"
+                                class="text-xs font-medium text-gray-500 hover:text-gray-700 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition">
+                            Salir
+                        </button>
+                    </form>
+                </div>
+            </div>
+        @endauth
     </div>
 </header>
 

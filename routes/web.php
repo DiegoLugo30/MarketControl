@@ -8,6 +8,7 @@ use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProvidersController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\Store\AccountController;
 use App\Http\Controllers\Store\OrderController;
 use App\Http\Controllers\Store\StoreController;
 use Illuminate\Support\Facades\Route;
@@ -118,4 +119,10 @@ Route::prefix('tienda')->name('store.')->group(function () {
     Route::get('/',              [StoreController::class, 'index'])->name('index');
     Route::get('/producto/{id}', [StoreController::class, 'show'])->name('product');
     Route::post('/orders',       [OrderController::class, 'store'])->name('orders.store');
+
+    // ── Área de cuenta — requiere autenticación ──────────────────────────────
+    Route::middleware('auth')->group(function () {
+        Route::get('/mi-cuenta/pedidos',        [AccountController::class, 'orders'])->name('account.orders');
+        Route::get('/mi-cuenta/pedidos/{code}', [AccountController::class, 'show'])->name('account.orders.show');
+    });
 });

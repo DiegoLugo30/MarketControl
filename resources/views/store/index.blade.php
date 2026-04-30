@@ -112,46 +112,7 @@
         {{-- Pagination --}}
         @if($products->hasPages())
             <div class="mt-10 flex justify-center">
-                {{-- Custom minimal pagination --}}
-                <nav class="flex items-center gap-1" aria-label="Paginación">
-                    {{-- Previous --}}
-                    @if($products->onFirstPage())
-                        <span class="w-9 h-9 flex items-center justify-center rounded-lg text-gray-300 cursor-not-allowed">
-                            <i class="fas fa-chevron-left text-sm"></i>
-                        </span>
-                    @else
-                        <a href="{{ $products->previousPageUrl() }}"
-                           class="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 transition">
-                            <i class="fas fa-chevron-left text-sm"></i>
-                        </a>
-                    @endif
-
-                    {{-- Page numbers --}}
-                    @foreach($products->getUrlRange(1, $products->lastPage()) as $page => $url)
-                        @if($page == $products->currentPage())
-                            <span class="w-9 h-9 flex items-center justify-center rounded-lg bg-brand-500 text-white text-sm font-semibold">
-                                {{ $page }}
-                            </span>
-                        @else
-                            <a href="{{ $url }}"
-                               class="w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 text-sm font-medium transition">
-                                {{ $page }}
-                            </a>
-                        @endif
-                    @endforeach
-
-                    {{-- Next --}}
-                    @if($products->hasMorePages())
-                        <a href="{{ $products->nextPageUrl() }}"
-                           class="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 transition">
-                            <i class="fas fa-chevron-right text-sm"></i>
-                        </a>
-                    @else
-                        <span class="w-9 h-9 flex items-center justify-center rounded-lg text-gray-300 cursor-not-allowed">
-                            <i class="fas fa-chevron-right text-sm"></i>
-                        </span>
-                    @endif
-                </nav>
+                @include('store.components.pagination', ['paginator' => $products])
             </div>
         @endif
 
